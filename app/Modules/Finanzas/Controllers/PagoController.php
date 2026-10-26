@@ -100,10 +100,11 @@ class PagoController extends Controller
     public function comprobante($id)
     {
         $pago = Pago::findOrFail($id);
-        if (!$pago->ruta_comprobante || !Storage::disk('public')->exists($pago->ruta_comprobante)) {
+        $disk = Storage::disk('local')->exists($pago->ruta_comprobante ?? '') ? 'local' : 'public';
+        if (!$pago->ruta_comprobante || !Storage::disk($disk)->exists($pago->ruta_comprobante)) {
             abort(404, 'Comprobante no encontrado.');
         }
 
-        return Storage::disk('public')->response($pago->ruta_comprobante);
+        return Storage::disk($disk)->response($pago->ruta_comprobante);
     }
 }

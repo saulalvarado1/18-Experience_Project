@@ -69,6 +69,7 @@ class PortalClienteTest extends TestCase
 
     public function test_client_can_accept_quote_and_upload_voucher()
     {
+        Storage::fake('local');
         Storage::fake('public');
 
         $counter = $this->getUsuario('COUNTER');

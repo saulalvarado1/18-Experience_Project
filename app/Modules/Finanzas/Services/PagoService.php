@@ -95,7 +95,7 @@ class PagoService
 
             $rutaComprobante = null;
             if ($comprobante && $comprobante->isValid()) {
-                $rutaComprobante = $comprobante->store('comprobantes', 'public');
+                $rutaComprobante = $comprobante->store('comprobantes', 'local');
             }
 
             $requiereVal = (bool) $metodo->requiere_validacion;
