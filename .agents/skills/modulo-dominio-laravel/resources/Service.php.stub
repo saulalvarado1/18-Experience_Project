@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Modules\{{Modulo}}\Services;
+
+use App\Modules\{{Modulo}}\Models\{{Entidad}};
+use App\Modules\Seguridad\Models\Auditoria;
+use Illuminate\Support\Facades\DB;
+
+class {{Entidad}}Service
+{
+    public function listar(?string $termino = null, ?string $estado = 'TODOS')
+    {
+        $query = {{Entidad}}::query();
+
+        if (!empty($termino)) {
+            $t = '%' . trim($termino) . '%';
+            $query->where('nombre', 'like', $t);
+        }
+
+        return $query->paginate(15);
+    }
+
+    public function registrar(array $datos, int $idUsuario): {{Entidad}}
+    {
+        // 1. Validaciones de negocio (mensajes en español)
+        if (empty(trim($datos['nombre'] ?? ''))) {
+            throw new \InvalidArgumentException('El nombre es obligatorio.');
+        }
+
+        // 2. Escritura atómica + auditoría
+        return DB::transaction(function () use ($datos, $idUsuario) {
+            $entidad = {{Entidad}}::create([
+                // ...
+            ]);
+
+            Auditoria::registrar($idUsuario, 'CREAR_{{ENTIDAD}}', '{{tabla}}', $entidad->getKey(), 'Detalle legible');
+
+            return $entidad;
+        });
+    }
+}

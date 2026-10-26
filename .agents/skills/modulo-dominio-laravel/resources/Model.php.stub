@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Modules\{{Modulo}}\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class {{Entidad}} extends Model
+{
+    protected $table = '{{tabla}}';
+    protected $primaryKey = 'id_{{tabla}}';
+    public $timestamps = false;
+
+    protected $fillable = [
+        // columnas exactas de schema.md
+    ];
+
+    protected $casts = [
+        // 'activo' => 'boolean',
+        // 'fecha_xxx' => 'datetime',
+        // 'monto' => 'decimal:2',
+    ];
+
+    // public function padre() { return $this->belongsTo(Padre::class, 'id_padre'); }
+    // public function hijos() { return $this->hasMany(Hijo::class, 'id_{{tabla}}'); }
+}

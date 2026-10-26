@@ -1,0 +1,65 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Modules\Seguridad\Models\Rol;
+use App\Modules\Seguridad\Models\Usuario;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+class {{Entidad}}Test extends TestCase
+{
+    protected Usuario $gerente;
+    protected Usuario $counter;
+    protected Usuario $contabilidad;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $porRol = fn (string $rol) => Usuario::where('id_rol', Rol::where('nombre', $rol)->value('id_rol'))->firstOrFail();
+
+        $this->gerente = $porRol('GERENTE');
+        $this->counter = $porRol('COUNTER');
+        $this->contabilidad = $porRol('CONTABILIDAD');
+    }
+
+    public function test_rol_autorizado_accede(): void
+    {
+        $this->actingAs($this->counter)->get('/{{recurso}}')->assertStatus(200);
+    }
+
+    public function test_rol_no_autorizado_recibe_403(): void
+    {
+        $this->actingAs($this->contabilidad)->get('/{{recurso}}')->assertStatus(403);
+    }
+
+    public function test_caso_feliz_registra_y_audita(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $this->actingAs($this->counter)
+                ->post('/{{recurso}}', [/* datos válidos */])
+                ->assertRedirect('/{{recurso}}')
+                ->assertSessionHas('success');
+
+            $this->assertDatabaseHas('auditoria', ['accion' => 'CREAR_{{ENTIDAD}}']);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_regla_de_negocio_rechaza_datos_invalidos(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $this->actingAs($this->counter)
+                ->post('/{{recurso}}', [/* datos que violan la regla RNxx */])
+                ->assertSessionHas('error');
+        } finally {
+            DB::rollBack();
+        }
+    }
+}

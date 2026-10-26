@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Modules\{{Modulo}}\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Modules\{{Modulo}}\Services\{{Entidad}}Service;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class {{Entidad}}Controller extends Controller
+{
+    public function __construct(protected {{Entidad}}Service $service)
+    {
+    }
+
+    public function index(Request $request)
+    {
+        $termino = $request->query('buscar');
+        $registros = $this->service->listar($termino);
+
+        return view('{{recurso}}.index', compact('registros', 'termino'));
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $this->service->registrar($request->all(), Auth::id());
+
+            return redirect()->route('{{recurso}}.index')->with('success', 'Registro guardado correctamente.');
+        } catch (\InvalidArgumentException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'Ocurrió un error: ' . $e->getMessage());
+        }
+    }
+}
