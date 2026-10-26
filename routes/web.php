@@ -3,10 +3,15 @@
 use Illuminate\Support\Facades\Route;
 use App\Modules\Seguridad\Controllers\AuthController;
 use App\Modules\Seguridad\Controllers\DashboardController;
+use App\Modules\Seguridad\Controllers\UsuarioController;
 use App\Modules\Clientes\Controllers\ClienteController;
 use App\Modules\Catalogo\Controllers\DestinoController;
 use App\Modules\Catalogo\Controllers\ProductoController;
 use App\Modules\Catalogo\Controllers\SalidaController;
+use App\Modules\Ventas\Controllers\CotizacionController;
+use App\Modules\Ventas\Controllers\ReservaController;
+use App\Modules\Finanzas\Controllers\PagoController;
+use App\Modules\Reportes\Controllers\ReporteController;
 
 // --- Rutas Públicas de Acceso (CU01) ---
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -45,20 +50,47 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/salidas', [SalidaController::class, 'store'])->name('salidas.store');
         Route::post('/salidas/{id}/capacidad', [SalidaController::class, 'cambiarCapacidad'])->name('salidas.capacidad');
         Route::post('/salidas/{id}/cancelar', [SalidaController::class, 'cancelar'])->name('salidas.cancelar');
+
+        // Cotizaciones (CU15, CU16, CU17)
+        Route::get('/cotizaciones', [CotizacionController::class, 'index'])->name('cotizaciones.index');
+        Route::get('/cotizaciones/crear', [CotizacionController::class, 'create'])->name('cotizaciones.create');
+        Route::post('/cotizaciones', [CotizacionController::class, 'store'])->name('cotizaciones.store');
+        Route::get('/cotizaciones/{id}', [CotizacionController::class, 'show'])->name('cotizaciones.show');
+        Route::post('/cotizaciones/{id}/estado', [CotizacionController::class, 'cambiarEstado'])->name('cotizaciones.estado');
+        Route::get('/cotizaciones/{id}/pdf', [CotizacionController::class, 'pdf'])->name('cotizaciones.pdf');
+
+        // Reservas (CU20, CU21, CU22, CU23)
+        Route::get('/reservas', [ReservaController::class, 'index'])->name('reservas.index');
+        Route::post('/reservas', [ReservaController::class, 'store'])->name('reservas.store');
+        Route::get('/reservas/{id}', [ReservaController::class, 'show'])->name('reservas.show');
+        Route::post('/reservas/{id}/cancelar', [ReservaController::class, 'cancelar'])->name('reservas.cancelar');
+        Route::post('/reservas/{id}/completar', [ReservaController::class, 'completar'])->name('reservas.completar');
     });
 
     // --- Sub-módulos para GERENTE, COUNTER y CONTABILIDAD ---
     Route::middleware(['rol:GERENTE,COUNTER,CONTABILIDAD'])->group(function () {
-        // Pagos
+        // Pagos - Listado, Registro y Visualización de comprobante (CU18)
+        Route::get('/pagos', [PagoController::class, 'index'])->name('pagos.index');
+        Route::post('/pagos', [PagoController::class, 'store'])->name('pagos.store');
+        Route::get('/pagos/{id}/comprobante', [PagoController::class, 'comprobante'])->name('pagos.comprobante');
     });
 
     // --- Sub-módulos para GERENTE y CONTABILIDAD ---
     Route::middleware(['rol:GERENTE,CONTABILIDAD'])->group(function () {
-        // Validación de Pagos y Reportes
+        // Validación / Rechazo de Pagos (CU19)
+        Route::post('/pagos/{id}/validar', [PagoController::class, 'validar'])->name('pagos.validar');
+        Route::post('/pagos/{id}/rechazar', [PagoController::class, 'rechazar'])->name('pagos.rechazar');
+
+        // Reportes Gerenciales y de Operación (CU24)
+        Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+        Route::get('/reportes/pdf', [ReporteController::class, 'pdf'])->name('reportes.pdf');
     });
 
     // --- Sub-módulos exclusivos para GERENTE ---
     Route::middleware(['rol:GERENTE'])->group(function () {
-        // Gestión de Usuarios y Auditoría
+        // Gestión de Usuarios del Sistema (CU04, CU05)
+        Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
+        Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
+        Route::post('/usuarios/{id}/toggle', [UsuarioController::class, 'toggleEstado'])->name('usuarios.toggle');
     });
 });

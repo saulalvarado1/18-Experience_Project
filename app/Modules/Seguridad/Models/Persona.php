@@ -32,4 +32,9 @@ class Persona extends Model
     {
         return trim("{$this->nombres} {$this->apellidos}");
     }
+
+    public function nombreCompleto(): string
+    {
+        return trim("{$this->nombres} {$this->apellidos}");
+    }
 }
