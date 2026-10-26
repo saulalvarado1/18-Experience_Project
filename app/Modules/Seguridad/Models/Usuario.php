@@ -45,6 +45,11 @@ class Usuario extends Authenticatable
         return $this->belongsTo(Rol::class, 'id_rol');
     }
 
+    public function cliente()
+    {
+        return $this->hasOne(\App\Modules\Clientes\Models\Cliente::class, 'id_persona', 'id_persona');
+    }
+
     public function tieneRol(string ...$roles): bool
     {
         if (!$this->rol) {

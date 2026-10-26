@@ -126,8 +126,15 @@
                     </button>
                 </form>
 
-                <div class="text-center mt-4">
-                    <small class="text-muted">18 Grados Sur © 2026 — Acceso Restringido</small>
+                <div class="text-center mt-3 pt-3 border-top">
+                    <span class="text-muted small">¿Eres turista o cliente nuevo?</span>
+                    <a href="{{ route('registro') }}" class="text-primary fw-bold text-decoration-none small d-block mt-1">
+                        <i class="bi bi-person-plus me-1"></i> Regístrate aquí en el Portal del Cliente
+                    </a>
+                </div>
+
+                <div class="text-center mt-3">
+                    <small class="text-muted">18 Grados Sur © 2026 — Sistema Comercial y Turístico</small>
                 </div>
             </div>
         </div>

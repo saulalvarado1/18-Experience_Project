@@ -83,6 +83,7 @@
         .badge-gerente { background-color: #dc2626; color: white; }
         .badge-counter { background-color: #2563eb; color: white; }
         .badge-contabilidad { background-color: #059669; color: white; }
+        .badge-cliente { background-color: #0284c7; color: white; }
     </style>
     @yield('styles')
 </head>
@@ -96,73 +97,97 @@
         </div>
 
         <ul class="sidebar-nav">
-            <!-- Módulos Generales -->
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                    <i class="bi bi-house-door"></i> INICIO
-                </a>
-            </li>
-
             @auth
-                <!-- Counter y Gerente -->
-                @if (auth()->user()->tieneRol('GERENTE', 'COUNTER'))
+                <!-- Menú Exclusivo para Clientes / Turistas -->
+                @if (auth()->user()->tieneRol('CLIENTE'))
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('clientes*') ? 'active' : '' }}" href="{{ url('/clientes') }}">
-                            <i class="bi bi-people"></i> CLIENTES
+                        <a class="nav-link {{ request()->is('mi-portal') ? 'active' : '' }}" href="{{ route('portal.dashboard') }}">
+                            <i class="bi bi-house-door"></i> MI PORTAL
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('destinos*') ? 'active' : '' }}" href="{{ url('/destinos') }}">
-                            <i class="bi bi-compass"></i> DESTINOS
+                        <a class="nav-link {{ request()->is('mi-portal/cotizaciones*') ? 'active' : '' }}" href="{{ route('portal.cotizaciones') }}">
+                            <i class="bi bi-receipt"></i> MIS COTIZACIONES
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('tours*') ? 'active' : '' }}" href="{{ url('/tours') }}">
-                            <i class="bi bi-map"></i> TOURS Y PAQUETES
+                        <a class="nav-link {{ request()->is('mi-portal/reservas*') ? 'active' : '' }}" href="{{ route('portal.reservas') }}">
+                            <i class="bi bi-bookmark-check"></i> MIS RESERVAS
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('salidas*') ? 'active' : '' }}" href="{{ url('/salidas') }}">
-                            <i class="bi bi-calendar-event"></i> SALIDAS
+                        <a class="nav-link {{ request()->is('mi-portal/tours*') ? 'active' : '' }}" href="{{ route('portal.tours') }}">
+                            <i class="bi bi-compass"></i> CATÁLOGO TOURS
                         </a>
                     </li>
+                @else
+                    <!-- Módulos Generales para Personal de la Agencia -->
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('cotizaciones*') ? 'active' : '' }}" href="{{ url('/cotizaciones') }}">
-                            <i class="bi bi-receipt"></i> COTIZACIONES
+                        <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                            <i class="bi bi-house-door"></i> INICIO
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('reservas*') ? 'active' : '' }}" href="{{ url('/reservas') }}">
-                            <i class="bi bi-bookmark-check"></i> RESERVAS
-                        </a>
-                    </li>
-                @endif
 
-                <!-- Pagos: Counter, Gerente y Contabilidad -->
-                @if (auth()->user()->tieneRol('GERENTE', 'COUNTER', 'CONTABILIDAD'))
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('pagos*') ? 'active' : '' }}" href="{{ url('/pagos') }}">
-                            <i class="bi bi-cash-stack"></i> PAGOS
-                        </a>
-                    </li>
-                @endif
+                    <!-- Counter y Gerente -->
+                    @if (auth()->user()->tieneRol('GERENTE', 'COUNTER'))
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('clientes*') ? 'active' : '' }}" href="{{ url('/clientes') }}">
+                                <i class="bi bi-people"></i> CLIENTES
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('destinos*') ? 'active' : '' }}" href="{{ url('/destinos') }}">
+                                <i class="bi bi-compass"></i> DESTINOS
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('tours*') ? 'active' : '' }}" href="{{ url('/tours') }}">
+                                <i class="bi bi-map"></i> TOURS Y PAQUETES
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('salidas*') ? 'active' : '' }}" href="{{ url('/salidas') }}">
+                                <i class="bi bi-calendar-event"></i> SALIDAS
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('cotizaciones*') ? 'active' : '' }}" href="{{ url('/cotizaciones') }}">
+                                <i class="bi bi-receipt"></i> COTIZACIONES
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('reservas*') ? 'active' : '' }}" href="{{ url('/reservas') }}">
+                                <i class="bi bi-bookmark-check"></i> RESERVAS
+                            </a>
+                        </li>
+                    @endif
 
-                <!-- Reportes: Gerente y Contabilidad -->
-                @if (auth()->user()->tieneRol('GERENTE', 'CONTABILIDAD'))
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('reportes*') ? 'active' : '' }}" href="{{ url('/reportes') }}">
-                            <i class="bi bi-bar-chart-line"></i> REPORTES
-                        </a>
-                    </li>
-                @endif
+                    <!-- Pagos: Counter, Gerente y Contabilidad -->
+                    @if (auth()->user()->tieneRol('GERENTE', 'COUNTER', 'CONTABILIDAD'))
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('pagos*') ? 'active' : '' }}" href="{{ url('/pagos') }}">
+                                <i class="bi bi-cash-stack"></i> PAGOS
+                            </a>
+                        </li>
+                    @endif
 
-                <!-- Solo Gerente -->
-                @if (auth()->user()->tieneRol('GERENTE'))
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('usuarios*') ? 'active' : '' }}" href="{{ url('/usuarios') }}">
-                            <i class="bi bi-person-gear"></i> USUARIOS
-                        </a>
-                    </li>
+                    <!-- Reportes: Gerente y Contabilidad -->
+                    @if (auth()->user()->tieneRol('GERENTE', 'CONTABILIDAD'))
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('reportes*') ? 'active' : '' }}" href="{{ url('/reportes') }}">
+                                <i class="bi bi-bar-chart-line"></i> REPORTES
+                            </a>
+                        </li>
+                    @endif
+
+                    <!-- Solo Gerente -->
+                    @if (auth()->user()->tieneRol('GERENTE'))
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('usuarios*') ? 'active' : '' }}" href="{{ url('/usuarios') }}">
+                                <i class="bi bi-person-gear"></i> USUARIOS
+                            </a>
+                        </li>
+                    @endif
                 @endif
             @endauth
         </ul>
@@ -190,7 +215,7 @@
             @auth
                 <div class="text-end">
                     <span class="d-block fw-semibold text-dark small">{{ auth()->user()->persona?->nombre_completo ?? auth()->user()->nombre_usuario }}</span>
-                    <span class="badge rounded-pill text-uppercase px-2 py-1 {{ auth()->user()->rol?->nombre === 'GERENTE' ? 'badge-gerente' : (auth()->user()->rol?->nombre === 'COUNTER' ? 'badge-counter' : 'badge-contabilidad') }}" style="font-size: 0.7rem;">
+                    <span class="badge rounded-pill text-uppercase px-2 py-1 {{ auth()->user()->rol?->nombre === 'GERENTE' ? 'badge-gerente' : (auth()->user()->rol?->nombre === 'COUNTER' ? 'badge-counter' : (auth()->user()->rol?->nombre === 'CLIENTE' ? 'badge-cliente' : 'badge-contabilidad')) }}" style="font-size: 0.7rem;">
                         {{ auth()->user()->rol?->nombre }}
                     </span>
                 </div>

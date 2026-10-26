@@ -9,6 +9,10 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        if (auth()->check() && auth()->user()->tieneRol('CLIENTE')) {
+            return redirect()->route('portal.dashboard');
+        }
+
         // 1. Indicadores del día (CU02)
         $hoy = now()->toDateString();
 

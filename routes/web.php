@@ -12,11 +12,15 @@ use App\Modules\Ventas\Controllers\CotizacionController;
 use App\Modules\Ventas\Controllers\ReservaController;
 use App\Modules\Finanzas\Controllers\PagoController;
 use App\Modules\Reportes\Controllers\ReporteController;
+use App\Modules\PortalCliente\Controllers\PortalClienteController;
+use App\Modules\PortalCliente\Controllers\RegistroClienteController;
 
-// --- Rutas Públicas de Acceso (CU01) ---
+// --- Rutas Públicas de Acceso (CU01 y Registro B2C) ---
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/captcha/refresh', [AuthController::class, 'refreshCaptcha'])->name('captcha.refresh');
+Route::get('/registro', [RegistroClienteController::class, 'showRegistro'])->name('registro');
+Route::post('/registro', [RegistroClienteController::class, 'registrar'])->name('registro.post');
 
 // --- Rutas Protegidas por Autenticación ---
 Route::middleware(['auth'])->group(function () {
@@ -92,5 +96,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
         Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
         Route::post('/usuarios/{id}/toggle', [UsuarioController::class, 'toggleEstado'])->name('usuarios.toggle');
+    });
+
+    // --- Portal del Cliente / Turista (Autoconsulta B2C) ---
+    Route::middleware(['rol:CLIENTE'])->group(function () {
+        Route::get('/mi-portal', [PortalClienteController::class, 'dashboard'])->name('portal.dashboard');
+        Route::get('/mi-portal/cotizaciones', [PortalClienteController::class, 'cotizaciones'])->name('portal.cotizaciones');
+        Route::post('/mi-portal/cotizaciones/{id}/aceptar', [PortalClienteController::class, 'aceptarCotizacion'])->name('portal.aceptar');
+        Route::get('/mi-portal/reservas', [PortalClienteController::class, 'reservas'])->name('portal.reservas');
+        Route::get('/mi-portal/reservas/{id}/voucher', [PortalClienteController::class, 'voucherPdf'])->name('portal.voucher');
+        Route::post('/mi-portal/pagos', [PortalClienteController::class, 'subirPago'])->name('portal.pago');
+        Route::get('/mi-portal/tours', [PortalClienteController::class, 'tours'])->name('portal.tours');
+        Route::post('/mi-portal/solicitar', [PortalClienteController::class, 'solicitarCotizacion'])->name('portal.solicitar');
     });
 });
