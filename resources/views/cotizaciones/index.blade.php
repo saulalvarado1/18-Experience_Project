@@ -85,6 +85,15 @@
                             <a href="{{ route('cotizaciones.pdf', $c->id_cotizacion) }}" class="btn btn-sm btn-outline-danger" title="Descargar PDF">
                                 <i class="bi bi-file-earmark-pdf"></i> PDF
                             </a>
+                            @php
+                                $telCliente = preg_replace('/[^0-9]/', '', $c->cliente->persona->telefono ?? '');
+                                $msgWs = urlencode("Hola " . ($c->cliente->persona->nombres ?? 'estimado cliente') . ", 18 Grados Sur te saluda. Te compartimos tu cotización " . $c->codigo . " por un total de S/ " . number_format($c->total, 2) . ".");
+                            @endphp
+                            @if(!empty($telCliente))
+                            <a href="https://wa.me/51{{ $telCliente }}?text={{ $msgWs }}" target="_blank" class="btn btn-sm btn-outline-success" title="Enviar por WhatsApp">
+                                <i class="bi bi-whatsapp"></i>
+                            </a>
+                            @endif
                             @if($c->estado === 'VIGENTE')
                             <form action="{{ route('cotizaciones.estado', $c->id_cotizacion) }}" method="POST" class="d-inline">
                                 @csrf

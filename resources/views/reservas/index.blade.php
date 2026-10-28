@@ -75,6 +75,15 @@
                             <button type="button" class="btn btn-sm btn-outline-info btn-ver-reserva" data-id="{{ $r->id_reserva }}" title="Ver Manifiesto y Detalles">
                                 <i class="bi bi-people"></i> Manifiesto
                             </button>
+                            @php
+                                $telCliRes = preg_replace('/[^0-9]/', '', $r->cotizacion->cliente->persona->telefono ?? '');
+                                $msgWsRes = urlencode("¡Hola " . ($r->cotizacion->cliente->persona->nombres ?? 'cliente') . "! Tu reserva " . $r->codigo . " con 18 Grados Sur está CONFIRMADA. ¡Te esperamos!");
+                            @endphp
+                            @if(!empty($telCliRes))
+                            <a href="https://wa.me/51{{ $telCliRes }}?text={{ $msgWsRes }}" target="_blank" class="btn btn-sm btn-outline-success" title="Enviar por WhatsApp">
+                                <i class="bi bi-whatsapp"></i>
+                            </a>
+                            @endif
                             @if($r->estado === 'CONFIRMADA')
                             <form action="{{ route('reservas.completar', $r->id_reserva) }}" method="POST" class="d-inline">
                                 @csrf

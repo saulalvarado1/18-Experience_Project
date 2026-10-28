@@ -1,22 +1,23 @@
 $ErrorActionPreference = "Continue"
 $projectDir = "c:\Users\Usuario\Documents\Gestion\18experience_web"
 $php = "C:\xampp\php\php.exe"
-$mysql = "C:\xampp\mysql\bin\mysql.exe"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "       AUDITORIA TECNICA - 18 EXPERIENCE WEB              " -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# 1. Estado de PHP y MySQL
-Write-Host "`n[1/5] Entorno y Base de Datos:" -ForegroundColor Yellow
+# 1. Estado de PHP y PostgreSQL
+Write-Host "`n[1/5] Entorno y Base de Datos (PostgreSQL):" -ForegroundColor Yellow
 & $php -v | Select-Object -First 1
-$portCheck = Test-NetConnection -ComputerName 127.0.0.1 -Port 3306 -WarningAction SilentlyContinue
-if ($portCheck.TcpTestSucceeded) {
-    Write-Host "  [OK] MySQL activo en 127.0.0.1:3306" -ForegroundColor Green
-    $tables = & $mysql -u root --default-character-set=utf8mb4 -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='db_18_experience';"
-    Write-Host "  [OK] Objetos en db_18_experience (tablas + vistas): $tables" -ForegroundColor Green
+
+$portCheckPg = Test-NetConnection -ComputerName 127.0.0.1 -Port 5432 -WarningAction SilentlyContinue
+if ($portCheckPg.TcpTestSucceeded) {
+    Write-Host "  [OK] PostgreSQL 18 activo en 127.0.0.1:5432" -ForegroundColor Green
+    Push-Location $projectDir
+    & $php artisan db:show
+    Pop-Location
 } else {
-    Write-Host "  [ERROR] MySQL NO responde en 127.0.0.1:3306" -ForegroundColor Red
+    Write-Host "  [ERROR] PostgreSQL NO responde en 127.0.0.1:5432" -ForegroundColor Red
 }
 
 # 2. Modulos implementados

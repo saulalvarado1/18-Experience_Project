@@ -30,6 +30,10 @@ class DashboardController extends Controller
             ->where('estado', 'PENDIENTE_VALIDACION')
             ->count();
 
+        $totalRecaudado = (float) DB::table('pago')
+            ->where('estado', 'VALIDADO')
+            ->sum('monto_base');
+
         // 2. Próximas salidas obtenidas de la vista vw_disponibilidad_salida (CU02)
         $proximasSalidas = DB::table('vw_disponibilidad_salida')
             ->whereDate('fecha', '>=', $hoy)
@@ -39,6 +43,39 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('dashboard.index', compact('reservasHoy', 'salidasHoy', 'pagosPendientes', 'proximasSalidas'));
+        // 3. Gráficos Analíticos de Gestión (RF14)
+        $ventasMes = DB::table('reserva')
+            ->where('estado', '!=', 'CANCELADA')
+            ->selectRaw("TO_CHAR(fecha_reserva, 'YYYY-MM') as mes, SUM(total_contratado) as total")
+            ->groupBy(DB::raw("TO_CHAR(fecha_reserva, 'YYYY-MM')"))
+            ->orderBy('mes', 'asc')
+            ->limit(6)
+            ->get();
+
+        $labelsMes = $ventasMes->pluck('mes')->toArray();
+        $dataVentas = $ventasMes->pluck('total')->map(fn($v) => (float)$v)->toArray();
+
+        $demandaTours = DB::table('detalle_reserva as dr')
+            ->join('producto_turistico as pt', 'pt.id_producto', '=', 'dr.id_producto')
+            ->join('reserva as r', 'r.id_reserva', '=', 'dr.id_reserva')
+            ->where('r.estado', '!=', 'CANCELADA')
+            ->select('pt.nombre', DB::raw('SUM(dr.cantidad_pasajeros) as total_pasajeros'))
+            ->groupBy('pt.nombre')
+            ->get();
+
+        $labelsTours = $demandaTours->pluck('nombre')->toArray();
+        $dataTours = $demandaTours->pluck('total_pasajeros')->map(fn($v) => (int)$v)->toArray();
+
+        return view('dashboard.index', compact(
+            'reservasHoy',
+            'salidasHoy',
+            'pagosPendientes',
+            'totalRecaudado',
+            'proximasSalidas',
+            'labelsMes',
+            'dataVentas',
+            'labelsTours',
+            'dataTours'
+        ));
     }
 }
