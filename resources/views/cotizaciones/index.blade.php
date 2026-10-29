@@ -49,7 +49,7 @@
                     <th>Código</th>
                     <th>Cliente</th>
                     <th>Emisión / Vigencia</th>
-                    <th>Counter</th>
+                    <th>Canal / Atendido</th>
                     <th>Total</th>
                     <th>Estado</th>
                     <th class="text-end">Acciones</th>
@@ -67,7 +67,13 @@
                         <div>{{ $c->fecha_cotizacion ? $c->fecha_cotizacion->format('d/m/Y') : '-' }}</div>
                         <small class="text-muted">Vence: {{ $c->vigencia_hasta ? $c->vigencia_hasta->format('d/m/Y') : 'Sin fecha' }}</small>
                     </td>
-                    <td>{{ $c->usuarioCounter->nombre_usuario ?? 'N/A' }}</td>
+                    <td>
+                        @if(($c->usuarioCounter->rol->nombre ?? '') === 'CLIENTE' || str_contains($c->observacion ?? '', 'cliente') || str_contains($c->observacion ?? '', 'línea'))
+                            <span class="badge bg-light text-primary border" title="Solicitada directamente por el turista desde el portal"><i class="bi bi-globe"></i> Portal Web</span>
+                        @else
+                            <span class="text-secondary"><i class="bi bi-person-badge"></i> {{ $c->usuarioCounter->nombre_usuario ?? 'Oficina' }}</span>
+                        @endif
+                    </td>
                     <td class="fw-bold text-success">{{ $c->moneda }} {{ number_format($c->total, 2) }}</td>
                     <td>
                         @if($c->estado === 'ACEPTADA')

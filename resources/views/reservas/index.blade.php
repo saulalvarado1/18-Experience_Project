@@ -44,7 +44,7 @@
                     <th>Código</th>
                     <th>Cotización / Cliente</th>
                     <th>Fecha Reserva</th>
-                    <th>Counter</th>
+                    <th>Canal / Atendido</th>
                     <th>Total Contratado</th>
                     <th>Estado</th>
                     <th class="text-end">Acciones</th>
@@ -59,7 +59,13 @@
                         <small class="text-muted">Cotización: {{ $r->cotizacion->codigo ?? 'N/A' }}</small>
                     </td>
                     <td>{{ $r->fecha_reserva ? $r->fecha_reserva->format('d/m/Y H:i') : '' }}</td>
-                    <td>{{ $r->usuarioCounter->nombre_usuario ?? 'N/A' }}</td>
+                    <td>
+                        @if(($r->usuarioCounter->rol->nombre ?? '') === 'CLIENTE' || ($r->id_usuario_counter == $r->cotizacion->id_cliente))
+                            <span class="badge bg-light text-primary border" title="Generada por autoservicio del cliente"><i class="bi bi-globe"></i> Portal Web</span>
+                        @else
+                            <span class="text-secondary"><i class="bi bi-person-badge"></i> {{ $r->usuarioCounter->nombre_usuario ?? 'Oficina' }}</span>
+                        @endif
+                    </td>
                     <td class="fw-bold text-success">{{ $r->moneda }} {{ number_format($r->total_contratado, 2) }}</td>
                     <td>
                         @if($r->estado === 'CONFIRMADA')

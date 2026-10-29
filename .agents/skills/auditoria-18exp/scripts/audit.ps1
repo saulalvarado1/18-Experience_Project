@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Continue"
-$projectDir = "c:\Users\Usuario\Documents\Gestion\18experience_web"
+$projectDir = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..")).Path
 $php = "C:\xampp\php\php.exe"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
