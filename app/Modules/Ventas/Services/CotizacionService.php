@@ -16,7 +16,7 @@ class CotizacionService
 {
     public function listar(array $filtros = [])
     {
-        $query = Cotizacion::with(['cliente.persona', 'usuarioCounter', 'detalles.producto', 'detalles.salida', 'pagos'])
+        $query = Cotizacion::with(['cliente.persona', 'usuarioCounter.rol', 'detalles.producto', 'detalles.salida', 'pagos'])
             ->orderBy('id_cotizacion', 'desc');
 
         if (!empty($filtros['estado']) && $filtros['estado'] !== 'TODOS') {

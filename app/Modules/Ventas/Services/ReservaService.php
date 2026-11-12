@@ -26,7 +26,7 @@ class ReservaService
     {
         $query = Reserva::with([
             'cotizacion.cliente.persona',
-            'usuarioCounter',
+            'usuarioCounter.rol',
             'detalles.producto',
             'detalles.salida',
             'detalles.pasajeros.persona',
