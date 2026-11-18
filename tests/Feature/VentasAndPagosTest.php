@@ -24,6 +24,7 @@ class VentasAndPagosTest extends TestCase
     {
         parent::setUp();
         DB::beginTransaction();
+        $this->sinMinimoDePasajeros();
     }
 
     protected function tearDown(): void
@@ -42,7 +43,7 @@ class VentasAndPagosTest extends TestCase
         $counter = $this->getUsuario('COUNTER');
         $cliente = Cliente::where('activo', 1)->firstOrFail();
         $producto = ProductoTuristico::where('activo', 1)->firstOrFail();
-        $salida = Salida::where('id_producto', $producto->id_producto)->where('estado', 'PROGRAMADA')->first();
+        $salida = $this->salidaFutura($producto->id_producto);
 
         $cotizacionService = app(CotizacionService::class);
         $cotizacion = $cotizacionService->crear(
@@ -103,7 +104,8 @@ class VentasAndPagosTest extends TestCase
         );
         $cotService->cambiarEstado($cot->id_cotizacion, 'ACEPTADA', $counter->id_usuario);
 
-        // Método con validación: TRANSFERENCIA (id 2)
+        // Método con validación: TRANSFERENCIA (id 2) → exige n.º de operación y comprobante (RN11)
+        \Illuminate\Support\Facades\Storage::fake('local');
         $pagoService = app(PagoService::class);
         $pago = $pagoService->registrar(
             [
@@ -112,7 +114,7 @@ class VentasAndPagosTest extends TestCase
                 'monto_base' => round((float) $cot->total * 0.5, 2), // 50% anticipo
                 'numero_operacion' => 'OP-TEST-12345',
             ],
-            null,
+            \Illuminate\Http\UploadedFile::fake()->create('voucher.pdf', 100, 'application/pdf'),
             $counter->id_usuario
         );
 
@@ -131,7 +133,7 @@ class VentasAndPagosTest extends TestCase
         $contabilidad = $this->getUsuario('CONTABILIDAD');
         $cliente = Cliente::where('activo', 1)->firstOrFail();
         $producto = ProductoTuristico::where('activo', 1)->firstOrFail();
-        $salida = Salida::where('id_producto', $producto->id_producto)->where('estado', 'PROGRAMADA')->firstOrFail();
+        $salida = $this->salidaFutura($producto->id_producto);
 
         $cotService = app(CotizacionService::class);
         $cot = $cotService->crear(
@@ -150,7 +152,7 @@ class VentasAndPagosTest extends TestCase
         // Intento de reservar sin pagos validados -> debe fallar (RN05)
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Anticipo insuficiente');
-        $reservaService->confirmarDesdeCotizacion($cot->id_cotizacion, $counter->id_usuario);
+        $reservaService->confirmarDesdeCotizacion($cot->id_cotizacion, $counter->id_usuario, $this->pasajerosPara($cot));
     }
 
     public function test_reserva_confirms_successfully_when_advance_is_validated()
@@ -159,7 +161,7 @@ class VentasAndPagosTest extends TestCase
         $contabilidad = $this->getUsuario('CONTABILIDAD');
         $cliente = Cliente::where('activo', 1)->firstOrFail();
         $producto = ProductoTuristico::where('activo', 1)->firstOrFail();
-        $salida = Salida::where('id_producto', $producto->id_producto)->where('estado', 'PROGRAMADA')->firstOrFail();
+        $salida = $this->salidaFutura($producto->id_producto);
 
         $cotService = app(CotizacionService::class);
         $cot = $cotService->crear(
@@ -189,7 +191,7 @@ class VentasAndPagosTest extends TestCase
 
         // Confirmar reserva
         $reservaService = app(ReservaService::class);
-        $reserva = $reservaService->confirmarDesdeCotizacion($cot->id_cotizacion, $counter->id_usuario);
+        $reserva = $reservaService->confirmarDesdeCotizacion($cot->id_cotizacion, $counter->id_usuario, $this->pasajerosPara($cot));
 
         $this->assertNotNull($reserva->id_reserva);
         $this->assertStringStartsWith('RES-', $reserva->codigo);

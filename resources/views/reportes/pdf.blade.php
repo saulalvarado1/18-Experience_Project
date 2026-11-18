@@ -136,6 +136,55 @@
         </tr>
     </table>
 
+    @if($resumen)
+    @php
+        // Gráficos para DomPDF (sin JavaScript): barras HTML con ancho proporcional (CU24).
+        $maxPax = max(1, ...array_map(fn ($p) => (int) $p->total_pasajeros, $resumen['productos_top'] ?: [(object) ['total_pasajeros' => 1]]));
+        $maxMetodo = max(1, ...(array_values($resumen['ventas_por_metodo']) ?: [1]));
+    @endphp
+    <div class="section-title">Resumen del período: {{ $desde ? \Carbon\Carbon::parse($desde)->format('d/m/Y') : 'inicio' }} al {{ $hasta ? \Carbon\Carbon::parse($hasta)->format('d/m/Y') : 'hoy' }}</div>
+    <table class="metricas-table">
+        <tr>
+            <td><div class="metricas-label">Clientes nuevos</div><div class="metricas-valor">{{ $resumen['clientes_nuevos'] }}</div></td>
+            <td><div class="metricas-label">Total vendido (pagos validados)</div><div class="metricas-valor" style="color: #28a745;">S/ {{ number_format($resumen['total_vendido'], 2) }}</div></td>
+            <td><div class="metricas-label">Reservas vigentes</div><div class="metricas-valor">{{ $resumen['reservas_vigentes'] }}</div></td>
+        </tr>
+    </table>
+
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 14px;">
+        <tr>
+            <td style="width: 50%; vertical-align: top; padding-right: 10px;">
+                <div style="font-weight: bold; font-size: 10px; margin-bottom: 6px;">Productos más reservados (pasajeros)</div>
+                @forelse($resumen['productos_top'] as $p)
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 4px; font-size: 9px;">
+                        <tr style="page-break-inside: avoid;">
+                            <td style="width: 40%;">{{ \Illuminate\Support\Str::limit($p->nombre, 28) }}</td>
+                            <td style="width: 50%;"><div style="background: #1e3a8a; height: 10px; width: {{ round($p->total_pasajeros * 100 / $maxPax) }}%;"></div></td>
+                            <td style="width: 10%; text-align: right;">{{ $p->total_pasajeros }}</td>
+                        </tr>
+                    </table>
+                @empty
+                    <div style="font-size: 9px; color: #777;">Sin reservas en el período.</div>
+                @endforelse
+            </td>
+            <td style="width: 50%; vertical-align: top; padding-left: 10px;">
+                <div style="font-weight: bold; font-size: 10px; margin-bottom: 6px;">Ventas por método de pago</div>
+                @forelse($resumen['ventas_por_metodo'] as $metodo => $monto)
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 4px; font-size: 9px;">
+                        <tr style="page-break-inside: avoid;">
+                            <td style="width: 30%;">{{ str_replace('_', ' ', $metodo) }}</td>
+                            <td style="width: 45%;"><div style="background: #e0a800; height: 10px; width: {{ round($monto * 100 / $maxMetodo) }}%;"></div></td>
+                            <td style="width: 25%; text-align: right;">S/ {{ number_format($monto, 2) }}</td>
+                        </tr>
+                    </table>
+                @empty
+                    <div style="font-size: 9px; color: #777;">Sin pagos validados en el período.</div>
+                @endforelse
+            </td>
+        </tr>
+    </table>
+    @endif
+
     <div class="section-title">1. Rendimiento Comercial por Producto Turístico</div>
     <table class="data-table">
         <thead>

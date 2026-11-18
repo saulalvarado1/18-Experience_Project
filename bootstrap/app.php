@@ -14,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'rol' => \App\Modules\Seguridad\Middleware\CheckRol::class,
         ]);
+
+        // Las pasarelas de pago no envían token CSRF; el webhook se autentica por sus credenciales.
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

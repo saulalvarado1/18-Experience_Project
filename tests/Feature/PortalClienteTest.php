@@ -23,6 +23,7 @@ class PortalClienteTest extends TestCase
     {
         parent::setUp();
         DB::beginTransaction();
+        $this->sinMinimoDePasajeros();
     }
 
     protected function tearDown(): void
@@ -64,7 +65,7 @@ class PortalClienteTest extends TestCase
 
         $response = $this->actingAs($clienteUser)->get('/mi-portal');
         $response->assertStatus(200);
-        $response->assertSee('Portal de Autoconsulta del Turista');
+        $response->assertSee('Portal del cliente');
     }
 
     public function test_client_can_accept_quote_and_upload_voucher()
@@ -119,5 +120,44 @@ class PortalClienteTest extends TestCase
         // Intento de entrar a modificar destinos
         $resp2 = $this->actingAs($clienteUser)->get('/destinos');
         $resp2->assertStatus(403);
+    }
+
+    public function test_client_can_download_own_quotation_pdf()
+    {
+        $counter = $this->getUsuario('COUNTER');
+        $clienteUser = $this->getUsuario('CLIENTE');
+        $cliente = Cliente::where('id_persona', $clienteUser->id_persona)->firstOrFail();
+        $producto = ProductoTuristico::where('activo', 1)->firstOrFail();
+
+        $cotService = app(CotizacionService::class);
+        $cot = $cotService->crear(
+            ['id_cliente' => $cliente->id_cliente],
+            [['id_producto' => $producto->id_producto, 'cantidad_pasajeros' => 2]],
+            $counter->id_usuario
+        );
+
+        $response = $this->actingAs($clienteUser)->get("/cotizaciones/{$cot->id_cotizacion}/pdf");
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_client_cannot_download_other_client_quotation_pdf()
+    {
+        $counter = $this->getUsuario('COUNTER');
+        $clienteUser = $this->getUsuario('CLIENTE');
+
+        // Buscar o crear otro cliente distinto
+        $otroCliente = Cliente::where('id_persona', '!=', $clienteUser->id_persona)->firstOrFail();
+        $producto = ProductoTuristico::where('activo', 1)->firstOrFail();
+
+        $cotService = app(CotizacionService::class);
+        $cot = $cotService->crear(
+            ['id_cliente' => $otroCliente->id_cliente],
+            [['id_producto' => $producto->id_producto, 'cantidad_pasajeros' => 1]],
+            $counter->id_usuario
+        );
+
+        $response = $this->actingAs($clienteUser)->get("/cotizaciones/{$cot->id_cotizacion}/pdf");
+        $response->assertStatus(403);
     }
 }

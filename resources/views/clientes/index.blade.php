@@ -1,11 +1,16 @@
 @extends('layouts.app')
 
 @section('title', 'Clientes')
-@section('page_title', 'Módulo de Clientes')
+@section('page_title', 'Clientes')
 
 @section('content')
 <div class="container-fluid">
-    <!-- Barra Superior de Acciones y Filtros (CU06) -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1">Clientes</h2>
+        <p class="text-muted mb-0">Registra y consulta a tus clientes y su historial de viajes.</p>
+    </div>
+
+    <!-- Barra Superior de Acciones y Filtros -->
     <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-body p-3">
             <form action="{{ route('clientes.index') }}" method="GET" class="row g-2 align-items-center">
@@ -24,12 +29,12 @@
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-secondary w-100 fw-semibold">
-                        <i class="bi bi-filter me-1"></i> FILTRAR
+                        <i class="bi bi-filter me-1"></i> Filtrar
                     </button>
                 </div>
                 <div class="col-md-2 text-end">
-                    <button type="button" class="btn btn-primary w-100 fw-semibold" style="background-color: #1e3a8a; border: none;" data-bs-toggle="modal" data-bs-target="#modalCliente" onclick="prepararNuevoCliente()">
-                        <i class="bi bi-person-plus-fill me-1"></i> NUEVO CLIENTE
+                    <button type="button" class="btn btn-primary w-100 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalCliente" onclick="prepararNuevoCliente()">
+                        <i class="bi bi-person-plus-fill me-1"></i> Nuevo cliente
                     </button>
                 </div>
             </form>
@@ -85,7 +90,7 @@
                                         <button type="button" class="btn btn-outline-secondary" title="Editar" onclick='editarCliente(@json($cliente))'>
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
-                                        <form action="{{ route('clientes.toggle', $cliente->id_cliente) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de cambiar el estado de este cliente?');">
+                                        <form action="{{ route('clientes.toggle', $cliente->id_cliente) }}" method="POST" class="d-inline" data-confirm="El cliente pasará a activo o inactivo." data-confirm-title="¿Cambiar estado del cliente?" data-confirm-ok="Sí, cambiar" data-confirm-variant="warning">
                                             @csrf
                                             <button type="submit" class="btn {{ $cliente->activo ? 'btn-outline-danger' : 'btn-outline-success' }}" title="{{ $cliente->activo ? 'Desactivar' : 'Activar' }}">
                                                 <i class="bi {{ $cliente->activo ? 'bi-person-slash' : 'bi-person-check' }}"></i>
@@ -190,7 +195,7 @@
 
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary fw-semibold" style="background-color: #1e3a8a;">Guardar Cliente</button>
+                    <button type="submit" class="btn btn-primary fw-semibold">Guardar Cliente</button>
                 </div>
             </form>
         </div>

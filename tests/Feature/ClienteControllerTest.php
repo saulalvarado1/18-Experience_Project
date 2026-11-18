@@ -31,8 +31,8 @@ class ClienteControllerTest extends TestCase
         $response = $this->actingAs($this->counterUser)->get('/clientes');
 
         $response->assertStatus(200);
-        $response->assertSee('Módulo de Clientes');
-        $response->assertSee('NUEVO CLIENTE');
+        $response->assertSee('Clientes');
+        $response->assertSee('Nuevo cliente');
     }
 
     public function test_contabilidad_is_forbidden_from_clientes_index(): void

@@ -94,53 +94,7 @@ class CotizacionService
                 'observacion' => $datos['observacion'] ?? null,
             ]);
 
-            $totalAcumulado = 0.00;
-
-            foreach ($items as $item) {
-                $producto = ProductoTuristico::findOrFail((int) $item['id_producto']);
-                if (!$producto->activo) {
-                    throw new InvalidArgumentException("El producto '{$producto->nombre}' está inactivo.");
-                }
-
-                $cantidad = (int) ($item['cantidad_pasajeros'] ?? 1);
-                if ($cantidad < 1) {
-                    throw new InvalidArgumentException("La cantidad de pasajeros debe ser al menos 1.");
-                }
-
-                $precioUnitario = isset($item['precio_unitario']) && $item['precio_unitario'] > 0
-                    ? round((float) $item['precio_unitario'], 2)
-                    : (float) $producto->precio_base;
-
-                $adicional = isset($item['monto_adicional']) ? round((float) $item['monto_adicional'], 2) : 0.00;
-                $subtotal = round(($cantidad * $precioUnitario) + $adicional, 2);
-
-                $idSalida = !empty($item['id_salida']) ? (int) $item['id_salida'] : null;
-
-                if ($idSalida) {
-                    $salida = Salida::findOrFail($idSalida);
-                    if ($salida->id_producto != $producto->id_producto) {
-                        throw new InvalidArgumentException("La salida seleccionada no corresponde al producto.");
-                    }
-                    if ($salida->estado !== 'PROGRAMADA') {
-                        throw new InvalidArgumentException("La salida no está disponible para cotizar (Estado: {$salida->estado}).");
-                    }
-                }
-
-                DetalleCotizacion::create([
-                    'id_cotizacion' => $cotizacion->id_cotizacion,
-                    'id_producto' => $producto->id_producto,
-                    'id_salida' => $idSalida,
-                    'cantidad_pasajeros' => $cantidad,
-                    'precio_unitario' => $precioUnitario,
-                    'monto_adicional' => $adicional,
-                    'subtotal' => $subtotal,
-                    'observacion' => $item['observacion'] ?? null,
-                ]);
-
-                $totalAcumulado += $subtotal;
-            }
-
-            $cotizacion->total = round($totalAcumulado, 2);
+            $cotizacion->total = $this->registrarDetalles($cotizacion, $items);
             $cotizacion->save();
 
             Auditoria::registrar(
@@ -153,6 +107,128 @@ class CotizacionService
 
             return $cotizacion;
         });
+    }
+
+    /**
+     * CU15 – Editar cotización: solo VIGENTE. Reemplaza los servicios (mismas validaciones del registro),
+     * recalcula el total y registra EDITAR_COTIZACION. El cliente y el código no cambian.
+     */
+    public function editar(int $idCotizacion, array $datos, array $items, int $idUsuario): Cotizacion
+    {
+        return DB::transaction(function () use ($idCotizacion, $datos, $items, $idUsuario) {
+            $cotizacion = Cotizacion::whereKey($idCotizacion)->lockForUpdate()->firstOrFail();
+
+            if ($cotizacion->estado !== 'VIGENTE') {
+                throw new InvalidArgumentException('Solo se pueden editar cotizaciones VIGENTES.');
+            }
+            if (empty($items)) {
+                throw new InvalidArgumentException('Debe agregar al menos un tour o paquete a la cotización.');
+            }
+
+            $totalAnterior = (float) $cotizacion->total;
+            DetalleCotizacion::where('id_cotizacion', $cotizacion->id_cotizacion)->delete();
+            $cotizacion->total = $this->registrarDetalles($cotizacion, $items);
+
+            if (!empty($datos['vigencia_hasta'])) {
+                $cotizacion->vigencia_hasta = $datos['vigencia_hasta'];
+            }
+            $cotizacion->observacion = $datos['observacion'] ?? null;
+            $cotizacion->save();
+
+            Auditoria::registrar(
+                $idUsuario,
+                'EDITAR_COTIZACION',
+                'cotizacion',
+                $cotizacion->id_cotizacion,
+                "Cotización {$cotizacion->codigo} editada. Total: S/ {$totalAnterior} → S/ {$cotizacion->total}. Servicios: " . count($items) . '.'
+            );
+
+            return $cotizacion;
+        });
+    }
+
+    /**
+     * Valida y registra los servicios de una cotización (CU15 pasos 3-5). Devuelve el total.
+     * Reglas: producto activo, cantidad ≥ 1, salida PROGRAMADA del mismo producto, misma moneda
+     * en todos los servicios y sin repetir producto + salida.
+     */
+    private function registrarDetalles(Cotizacion $cotizacion, array $items): float
+    {
+        $total = 0.00;
+        $moneda = null;
+        $vistos = [];
+
+        foreach ($items as $item) {
+            $producto = ProductoTuristico::findOrFail((int) $item['id_producto']);
+            if (!$producto->activo) {
+                throw new InvalidArgumentException("El producto '{$producto->nombre}' está inactivo.");
+            }
+
+            $cantidad = (int) ($item['cantidad_pasajeros'] ?? 1);
+            if ($cantidad < 1) {
+                throw new InvalidArgumentException("La cantidad de pasajeros debe ser al menos 1.");
+            }
+            // CU15 paso 5 / RN09: respetar el mínimo de pasajeros del producto
+            $minimo = max(1, (int) $producto->minimo_pasajeros);
+            if ($cantidad < $minimo) {
+                throw new InvalidArgumentException("El tour '{$producto->nombre}' requiere un mínimo de {$minimo} pasajeros.");
+            }
+
+            $moneda ??= $producto->moneda;
+            if ($producto->moneda !== $moneda) {
+                throw new InvalidArgumentException('Todos los servicios de la cotización deben estar en la misma moneda.');
+            }
+
+            $idSalida = !empty($item['id_salida']) ? (int) $item['id_salida'] : null;
+            $clave = $producto->id_producto . '-' . ($idSalida ?? 'sin-salida');
+            if (isset($vistos[$clave])) {
+                throw new InvalidArgumentException("El servicio '{$producto->nombre}' está repetido con la misma salida.");
+            }
+            $vistos[$clave] = true;
+
+            if ($idSalida) {
+                $salida = Salida::findOrFail($idSalida);
+                if ($salida->id_producto != $producto->id_producto) {
+                    throw new InvalidArgumentException("La salida seleccionada no corresponde al producto.");
+                }
+                if ($salida->estado !== 'PROGRAMADA') {
+                    throw new InvalidArgumentException("La salida no está disponible para cotizar (Estado: {$salida->estado}).");
+                }
+                // CU15 paso 3-4: solo salidas futuras y con cupos (la cotización no reserva cupos)
+                if ($salida->fecha->lt(now()->startOfDay())) {
+                    throw new InvalidArgumentException("La salida del {$salida->fecha->format('d/m/Y')} ya pasó; elija otra fecha.");
+                }
+                $disponibles = (int) $salida->disponibilidad->disponibles;
+                if ($disponibles < $cantidad) {
+                    throw new InvalidArgumentException("La salida del {$salida->fecha->format('d/m/Y')} solo tiene {$disponibles} cupo(s) disponible(s).");
+                }
+            }
+
+            $precioUnitario = isset($item['precio_unitario']) && $item['precio_unitario'] > 0
+                ? round((float) $item['precio_unitario'], 2)
+                : (float) $producto->precio_base;
+            $adicional = isset($item['monto_adicional']) ? round((float) $item['monto_adicional'], 2) : 0.00;
+            $subtotal = round(($cantidad * $precioUnitario) + $adicional, 2);
+
+            DetalleCotizacion::create([
+                'id_cotizacion' => $cotizacion->id_cotizacion,
+                'id_producto' => $producto->id_producto,
+                'id_salida' => $idSalida,
+                'cantidad_pasajeros' => $cantidad,
+                'precio_unitario' => $precioUnitario,
+                'monto_adicional' => $adicional,
+                'subtotal' => $subtotal,
+                'observacion' => $item['observacion'] ?? null,
+            ]);
+
+            $total += $subtotal;
+        }
+
+        if ($moneda && $cotizacion->moneda !== $moneda) {
+            $cotizacion->moneda = $moneda;
+        }
+
+        return round($total, 2);
     }
 
     public function cambiarEstado(int $idCotizacion, string $nuevoEstado, int $idUsuario, ?string $motivo = null): Cotizacion

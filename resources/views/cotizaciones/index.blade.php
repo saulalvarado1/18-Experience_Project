@@ -1,11 +1,12 @@
 @extends('layouts.app')
 
 @section('title', 'Cotizaciones — 18 Grados Sur')
+@section('page_title', 'Cotizaciones')
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-file-earmark-spreadsheet text-primary me-2"></i>Gestión de Cotizaciones (CU15–CU17)</h2>
+        <h2 class="fw-bold text-dark mb-1">Cotizaciones</h2>
         <p class="text-muted mb-0">Emisión de cotizaciones comerciales, exportación en PDF corporativo y seguimiento de estado.</p>
     </div>
     <div>
@@ -101,17 +102,20 @@
                             </a>
                             @endif
                             @if($c->estado === 'VIGENTE')
+                            <a href="{{ route('cotizaciones.edit', $c->id_cotizacion) }}" class="btn btn-sm btn-outline-secondary" title="Editar cotización">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
                             <form action="{{ route('cotizaciones.estado', $c->id_cotizacion) }}" method="POST" class="d-inline">
                                 @csrf
                                 <input type="hidden" name="estado" value="ACEPTADA">
-                                <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como Aceptada por el Cliente" onclick="return confirm('¿Aceptar cotización y verificar cupos?')">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como Aceptada por el Cliente" data-confirm="Se verificará que aún haya cupos disponibles en las salidas." data-confirm-title="¿Aceptar la cotización?" data-confirm-ok="Sí, aceptar" data-confirm-variant="success">
                                     <i class="bi bi-check2-circle"></i>
                                 </button>
                             </form>
                             <form action="{{ route('cotizaciones.estado', $c->id_cotizacion) }}" method="POST" class="d-inline">
                                 @csrf
                                 <input type="hidden" name="estado" value="CANCELADA">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Cancelar Cotización" onclick="return confirm('¿Cancelar esta cotización?')">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Cancelar Cotización" data-confirm="La cotización quedará cancelada y no podrá reservarse." data-confirm-title="¿Cancelar la cotización?" data-confirm-ok="Sí, cancelar" data-confirm-variant="danger">
                                     <i class="bi bi-x-circle"></i>
                                 </button>
                             </form>

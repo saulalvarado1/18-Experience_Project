@@ -1,11 +1,16 @@
 @extends('layouts.app')
 
 @section('title', 'Destinos')
-@section('page_title', 'Catálogo de Destinos Turísticos')
+@section('page_title', 'Destinos')
 
 @section('content')
 <div class="container-fluid">
-    <!-- Filtros y Botón Nuevo Destino (CU08) -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1">Destinos</h2>
+        <p class="text-muted mb-0">Lugares turísticos que forman parte de los tours.</p>
+    </div>
+
+    <!-- Filtros y Botón Nuevo Destino -->
     <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-body p-3">
             <form action="{{ route('destinos.index') }}" method="GET" class="row g-2 align-items-center">
@@ -24,12 +29,12 @@
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-secondary w-100 fw-semibold">
-                        <i class="bi bi-filter me-1"></i> FILTRAR
+                        <i class="bi bi-filter me-1"></i> Filtrar
                     </button>
                 </div>
                 <div class="col-md-2 text-end">
-                    <button type="button" class="btn btn-primary w-100 fw-semibold" style="background-color: #1e3a8a; border: none;" data-bs-toggle="modal" data-bs-target="#modalDestino" onclick="prepararNuevoDestino()">
-                        <i class="bi bi-plus-circle-fill me-1"></i> NUEVO DESTINO
+                    <button type="button" class="btn btn-primary w-100 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalDestino" onclick="prepararNuevoDestino()">
+                        <i class="bi bi-plus-circle-fill me-1"></i> Nuevo destino
                     </button>
                 </div>
             </form>
@@ -72,7 +77,7 @@
                                         <button type="button" class="btn btn-outline-secondary" title="Editar" onclick='editarDestino(@json($d))'>
                                             <i class="bi bi-pencil-square"></i> Editar
                                         </button>
-                                        <form action="{{ route('destinos.toggle', $d->id_destino) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Desea cambiar el estado de este destino?');">
+                                        <form action="{{ route('destinos.toggle', $d->id_destino) }}" method="POST" class="d-inline" data-confirm="El destino pasará a activo o inactivo." data-confirm-title="¿Cambiar estado del destino?" data-confirm-ok="Sí, cambiar" data-confirm-variant="warning">
                                             @csrf
                                             <button type="submit" class="btn {{ $d->activo ? 'btn-outline-danger' : 'btn-outline-success' }}">
                                                 <i class="bi {{ $d->activo ? 'bi-eye-slash' : 'bi-eye' }}"></i>
@@ -150,7 +155,7 @@
 
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary fw-semibold" style="background-color: #1e3a8a;">Guardar Destino</button>
+                    <button type="submit" class="btn btn-primary fw-semibold">Guardar Destino</button>
                 </div>
             </form>
         </div>

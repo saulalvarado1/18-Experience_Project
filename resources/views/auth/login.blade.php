@@ -1,146 +1,112 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - 18 Experience</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        body {
-            background-color: #f4f6f9;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .login-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-            overflow: hidden;
-            max-width: 900px;
-            width: 100%;
-        }
-        .login-cover {
-            background: linear-gradient(135deg, rgba(22, 101, 52, 0.85), rgba(15, 23, 42, 0.9)), url('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=800&q=80') center/cover;
-            color: #fff;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .login-cover h2 {
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-        .brand-badge {
-            display: inline-block;
-            background: #eab308;
-            color: #000;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-        }
-        .captcha-box {
-            background: #e2e8f0;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.5rem;
-            font-weight: bold;
-            letter-spacing: 6px;
-            color: #0f172a;
-            padding: 6px 14px;
-            border-radius: 6px;
-            user-select: none;
-            display: inline-block;
-        }
-    </style>
-</head>
-<body>
+@extends('layouts.guest')
 
-<div class="container p-3">
-    <div class="card login-card mx-auto">
-        <div class="row g-0">
-            <!-- Columna Izquierda: Imagen y Marca -->
-            <div class="col-md-5 login-cover d-none d-md-flex">
-                <div>
-                    <span class="brand-badge"><i class="bi bi-geo-alt-fill"></i> TACNA - PERÚ</span>
-                    <h2>18 EXPERIENCE</h2>
-                    <p class="text-light opacity-75">18 Grados Sur — Agencia de Viajes & Tour Operador</p>
-                </div>
-                <div class="mt-4">
-                    <p class="small mb-1"><i class="bi bi-shield-check"></i> Sistema Interno de Gestión Comercial</p>
-                    <p class="small opacity-75">Reservas • Salidas • Cotizaciones • Pagos</p>
-                </div>
+@section('title', 'Iniciar sesión')
+
+@section('styles')
+<style>
+    .auth-card { max-width: 920px; }
+    .captcha-box {
+        background: repeating-linear-gradient(45deg, #eef2f9, #eef2f9 6px, #e3e9f4 6px, #e3e9f4 12px);
+        border: 1px dashed #b6c2d9;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.45rem; font-weight: 700; letter-spacing: 6px;
+        color: var(--brand-sidebar);
+        padding: .3rem 1rem; border-radius: .5rem;
+        user-select: none; flex: 1; text-align: center;
+    }
+</style>
+@endsection
+
+@section('content')
+<div class="card auth-card">
+    <div class="auth-mobile-brand">
+        <img src="{{ asset('img/logo-18-grados-sur.png') }}" alt="18 Grados Sur">
+        <span>18 Experience</span>
+    </div>
+
+    <div class="row g-0">
+        <!-- Columna de marca (escritorio) -->
+        <div class="col-md-5 auth-cover d-none d-md-flex">
+            <div>
+                <img src="{{ asset('img/logo-18-grados-sur.png') }}" alt="18 Grados Sur" class="logo mb-4">
+                <div><span class="auth-chip"><i class="bi bi-geo-alt-fill"></i> Tacna · Perú</span></div>
+                <h2 class="mt-3 mb-2">Bienvenido a 18 Experience</h2>
+                <p class="text-white-50 mb-0">Agencia de viajes y operador turístico del sur del Perú.</p>
+            </div>
+            <ul class="list-unstyled auth-list mt-5 mb-0">
+                <li><i class="bi bi-compass"></i> Tours y paquetes por Tacna y alrededores</li>
+                <li><i class="bi bi-credit-card"></i> Paga en línea con tarjeta o Yape</li>
+                <li><i class="bi bi-ticket-perforated"></i> Descarga tus boletos de viaje</li>
+            </ul>
+        </div>
+
+        <!-- Formulario -->
+        <div class="col-md-7 p-4 p-lg-5 auth-form">
+            <div class="mb-4">
+                <h3 class="fw-bold text-dark mb-1">Iniciar sesión</h3>
+                <p class="text-muted small mb-0">Clientes y personal de la agencia.</p>
             </div>
 
-            <!-- Columna Derecha: Formulario de Acceso -->
-            <div class="col-md-7 p-4 p-lg-5 bg-white">
-                <div class="text-center mb-4">
-                    <h3 class="fw-bold text-dark mb-1">Iniciar Sesión</h3>
-                    <p class="text-muted small">Ingrese sus credenciales y código de verificación</p>
+            @if ($errors->any())
+                <div class="alert alert-danger py-2 small d-flex align-items-start" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+                    <div>{{ $errors->first() }}</div>
+                </div>
+            @endif
+            @if (session('success'))
+                <div class="alert alert-success py-2 small" role="alert">{{ session('success') }}</div>
+            @endif
+
+            <form method="POST" action="{{ route('login.post') }}">
+                @csrf
+
+                <div class="mb-3">
+                    <label for="usuario" class="form-label">Usuario o correo</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control @error('usuario') is-invalid @enderror" id="usuario" name="usuario" value="{{ old('usuario') }}" placeholder="tucorreo@ejemplo.com" autocomplete="username" required autofocus>
+                    </div>
                 </div>
 
-                @if ($errors->any())
-                    <div class="alert alert-danger py-2 small" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        {{ $errors->first() }}
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                        <button type="button" class="btn btn-toggle-pass" data-toggle-password="password" aria-label="Mostrar contraseña"><i class="bi bi-eye"></i></button>
                     </div>
-                @endif
-
-                <form method="POST" action="{{ route('login.post') }}">
-                    @csrf
-
-                    <div class="mb-3">
-                        <label for="usuario" class="form-label small fw-semibold text-secondary">Usuario</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
-                            <input type="text" class="form-control" id="usuario" name="usuario" value="{{ old('usuario') }}" placeholder="Ej: admin o counter1" required autofocus>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="password" class="form-label small fw-semibold text-secondary">Contraseña</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label small fw-semibold text-secondary d-block">Código CAPTCHA</label>
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <span class="captcha-box" id="captcha-display">{{ $captcha }}</span>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-refresh-captcha" title="Generar nuevo código">
-                                <i class="bi bi-arrow-clockwise"></i> NUEVO
-                            </button>
-                        </div>
-                        <input type="text" class="form-control text-uppercase" id="captcha" name="captcha" placeholder="Ingrese el código de 5 caracteres" maxlength="5" required>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" style="background-color: #1e3a8a; border: none;">
-                        <i class="bi bi-box-arrow-in-right me-1"></i> INICIAR SESIÓN
-                    </button>
-                </form>
-
-                <div class="text-center mt-3 pt-3 border-top">
-                    <span class="text-muted small">¿Eres turista o cliente nuevo?</span>
-                    <a href="{{ route('registro') }}" class="text-primary fw-bold text-decoration-none small d-block mt-1">
-                        <i class="bi bi-person-plus me-1"></i> Regístrate aquí en el Portal del Cliente
-                    </a>
                 </div>
 
-                <div class="text-center mt-3">
-                    <small class="text-muted">18 Grados Sur © 2026 — Sistema Comercial y Turístico</small>
+                <div class="mb-4">
+                    <label for="captcha" class="form-label d-block">Código de verificación</label>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="captcha-box" id="captcha-display" aria-live="polite">{{ $captcha }}</span>
+                        <button type="button" class="btn btn-outline-secondary" id="btn-refresh-captcha" title="Generar otro código" aria-label="Generar otro código">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <input type="text" class="form-control text-uppercase @error('captcha') is-invalid @enderror" id="captcha" name="captcha" placeholder="Escribe los 5 caracteres" maxlength="5" autocomplete="off" required>
                 </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Ingresar
+                </button>
+            </form>
+
+            <div class="text-center mt-4 pt-4 border-top">
+                <span class="text-muted small">¿Eres turista y aún no tienes cuenta?</span>
+                <a href="{{ route('registro') }}" class="btn btn-gold w-100 mt-2">
+                    <i class="bi bi-person-plus me-1"></i> Crear mi cuenta de cliente
+                </a>
             </div>
+
+            <p class="text-center text-muted small mt-4 mb-0">18 Grados Sur S.A.C. © {{ date('Y') }}</p>
         </div>
     </div>
 </div>
+@endsection
 
+@section('scripts')
 <script>
     document.getElementById('btn-refresh-captcha').addEventListener('click', function () {
         fetch('{{ route('captcha.refresh') }}')
@@ -152,6 +118,4 @@
             });
     });
 </script>
-
-</body>
-</html>
+@endsection

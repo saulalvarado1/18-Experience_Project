@@ -27,6 +27,8 @@ class Pago extends Model
         'ruta_comprobante',
         'fecha_validacion',
         'observacion',
+        'monto_devuelto',
+        'monto_base_devuelto',
     ];
 
     protected $casts = [
@@ -35,7 +37,20 @@ class Pago extends Model
         'monto_base' => 'decimal:2',
         'recargo' => 'decimal:2',
         'monto_total_pagado' => 'decimal:2',
+        'monto_devuelto' => 'decimal:2',
+        'monto_base_devuelto' => 'decimal:2',
     ];
+
+    public function devoluciones()
+    {
+        return $this->hasMany(DevolucionPago::class, 'id_pago');
+    }
+
+    /** Monto (incluido recargo) que aún puede devolverse al cliente. */
+    public function montoDevolvible(): float
+    {
+        return max(0.0, round((float) $this->monto_total_pagado - (float) $this->monto_devuelto, 2));
+    }
 
     public function metodoPago()
     {

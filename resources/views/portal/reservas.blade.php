@@ -1,74 +1,111 @@
 @extends('layouts.app')
 
 @section('title', 'Mis Reservas y Boletos — 18 Grados Sur')
+@section('page_title', 'Mis reservas')
+
+@section('styles')
+<style>
+    .reserva-card { border: 0; border-radius: .9rem; box-shadow: 0 1px 3px rgba(15, 23, 42, .08); overflow: hidden; }
+    .reserva-card.CANCELADA { opacity: .7; }
+    .reserva-lateral {
+        background: var(--brand-primary); color: #fff;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        padding: 1.25rem; text-align: center; min-width: 140px;
+    }
+    .reserva-card.CANCELADA .reserva-lateral { background: #64748b; }
+    .reserva-lateral .dia { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+    .reserva-lateral .mes { text-transform: uppercase; letter-spacing: .1em; font-size: .8rem; color: var(--brand-gold); font-weight: 700; }
+    .reserva-codigo { font-weight: 700; color: var(--brand-primary); letter-spacing: .02em; }
+    .tramo + .tramo { border-top: 1px dashed #e2e8f0; padding-top: .6rem; margin-top: .6rem; }
+    @media (max-width: 575.98px) {
+        .reserva-lateral { flex-direction: row; gap: .75rem; min-width: 0; padding: .75rem 1rem; justify-content: flex-start; }
+        .reserva-lateral .dia { font-size: 1.6rem; }
+    }
+</style>
+@endsection
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-calendar-check text-success me-2"></i>Mis Reservas y Boletos de Viaje</h2>
-        <p class="text-muted mb-0">Consulta tus itinerarios confirmados y descarga tus vouchers oficiales para abordar las unidades.</p>
-    </div>
+@php
+    $estados = [
+        'CONFIRMADA' => ['Confirmada', 'bg-success'],
+        'COMPLETADA' => ['Viaje realizado', 'bg-primary'],
+        'CANCELADA' => ['Cancelada', 'bg-secondary'],
+    ];
+@endphp
+
+<div class="mb-4">
+    <h2 class="fw-bold text-dark mb-1">Mis reservas</h2>
+    <p class="text-muted mb-0">Tus viajes confirmados. Descarga el boleto y preséntalo el día de la salida.</p>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Código Reserva</th>
-                    <th>Fecha Reserva</th>
-                    <th>Tours e Itinerario</th>
-                    <th>Total Contratado</th>
-                    <th>Estado</th>
-                    <th class="text-end">Boleto / Voucher</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($reservas as $r)
-                <tr>
-                    <td class="fw-bold text-primary">{{ $r->codigo }}</td>
-                    <td>{{ $r->fecha_reserva ? $r->fecha_reserva->format('d/m/Y H:i') : '-' }}</td>
-                    <td>
-                        @foreach($r->detalles as $det)
-                            <div class="fw-semibold text-dark">{{ $det->producto->nombre ?? 'Tour' }}</div>
-                            <div class="small text-muted">
-                                <i class="bi bi-clock me-1"></i>
-                                Salida: <strong>{{ $det->salida && $det->salida->fecha ? $det->salida->fecha->format('d/m/Y') : 'Por coordinar' }}</strong>
-                                {{ $det->salida ? $det->salida->hora : '' }} | {{ $det->cantidad_pasajeros }} pasajero{{ $det->cantidad_pasajeros > 1 ? 's' : '' }}
-                            </div>
-                        @endforeach
-                    </td>
-                    <td class="fw-bold text-success">{{ $r->moneda }} {{ number_format($r->total_contratado, 2) }}</td>
-                    <td>
-                        @if($r->estado === 'CONFIRMADA')
-                            <span class="badge bg-success">CONFIRMADA</span>
-                        @elseif($r->estado === 'COMPLETADA')
-                            <span class="badge bg-primary">COMPLETADA</span>
-                        @else
-                            <span class="badge bg-secondary">CANCELADA</span>
-                        @endif
-                    </td>
-                    <td class="text-end">
-                        <a href="{{ route('portal.voucher', $r->id_reserva) }}" class="btn btn-sm btn-success shadow-sm">
-                            <i class="bi bi-file-earmark-pdf me-1"></i> Descargar Boleto PDF
+@forelse($reservas as $r)
+    @php
+        [$estadoTexto, $estadoClase] = $estados[$r->estado] ?? [$r->estado, 'bg-secondary'];
+        $primeraSalida = $r->detalles->pluck('salida')->filter(fn ($s) => $s && $s->fecha)->sortBy('fecha')->first();
+        $pasajeros = $r->detalles->sum('cantidad_pasajeros');
+    @endphp
+    <div class="card reserva-card {{ $r->estado }} mb-3">
+        <div class="d-flex flex-column flex-sm-row">
+            <div class="reserva-lateral">
+                @if($primeraSalida)
+                    <div class="dia">{{ $primeraSalida->fecha->format('d') }}</div>
+                    <div>
+                        <div class="mes">{{ $primeraSalida->fecha->locale('es')->translatedFormat('M Y') }}</div>
+                        @if($primeraSalida->hora)<small class="opacity-75">{{ substr($primeraSalida->hora, 0, 5) }} h</small>@endif
+                    </div>
+                @else
+                    <i class="bi bi-calendar-event fs-2"></i>
+                    <small class="opacity-75">Fecha por coordinar</small>
+                @endif
+            </div>
+
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                    <div>
+                        <span class="reserva-codigo">{{ $r->codigo }}</span>
+                        <span class="badge {{ $estadoClase }} ms-2">{{ $estadoTexto }}</span>
+                    </div>
+                    <span class="fw-bold text-dark">{{ $r->moneda === 'USD' ? 'US$' : 'S/' }} {{ number_format($r->total_contratado, 2) }}</span>
+                </div>
+
+                @foreach($r->detalles as $det)
+                    <div class="tramo">
+                        <div class="fw-semibold text-dark"><i class="bi bi-geo-alt-fill text-gold me-1"></i>{{ $det->producto->nombre ?? 'Tour' }}</div>
+                        <small class="text-muted">
+                            {{ $det->salida && $det->salida->fecha ? $det->salida->fecha->format('d/m/Y') : 'Fecha por coordinar' }}
+                            {{ $det->salida && $det->salida->hora ? '· ' . substr($det->salida->hora, 0, 5) . ' h' : '' }}
+                            · {{ $det->cantidad_pasajeros }} {{ $det->cantidad_pasajeros == 1 ? 'pasajero' : 'pasajeros' }}
+                        </small>
+                    </div>
+                @endforeach
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 pt-3 border-top">
+                    <small class="text-muted">
+                        Reservado el {{ $r->fecha_reserva ? $r->fecha_reserva->format('d/m/Y') : '-' }} · {{ $pasajeros }} {{ $pasajeros == 1 ? 'pasajero' : 'pasajeros' }}
+                    </small>
+                    @if($r->estado !== 'CANCELADA')
+                        <a href="{{ route('portal.voucher', $r->id_reserva) }}" class="btn btn-sm btn-gold">
+                            <i class="bi bi-ticket-perforated me-1"></i> Descargar boleto PDF
                         </a>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">
-                        <i class="bi bi-ticket-perforated fs-2 d-block mb-2"></i>
-                        No tienes reservas registradas en este momento.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                    @else
+                        <small class="text-muted"><i class="bi bi-x-circle me-1"></i>Reserva cancelada</small>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
-    @if($reservas->hasPages())
-    <div class="card-footer bg-white border-0 py-3">
-        {{ $reservas->links() }}
+@empty
+    <div class="card reserva-card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-ticket-perforated fs-1 text-gold d-block mb-3"></i>
+            <h5 class="fw-bold">Aún no tienes reservas</h5>
+            <p class="text-muted mb-4">Cuando pagues el anticipo de una cotización, confirmaremos tu reserva y aparecerá aquí.</p>
+            <a href="{{ route('portal.cotizaciones') }}" class="btn btn-primary"><i class="bi bi-receipt me-1"></i> Ver mis cotizaciones</a>
+        </div>
     </div>
-    @endif
-</div>
+@endforelse
+
+@if($reservas->hasPages())
+    <div class="mt-3">{{ $reservas->links() }}</div>
+@endif
 @endsection

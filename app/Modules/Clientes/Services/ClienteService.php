@@ -44,6 +44,58 @@ class ClienteService
                      ->paginate(15);
     }
 
+    /**
+     * Busca una persona por su documento (RN02: identidad única por tipo y número).
+     */
+    public function buscarPersonaPorDocumento(string $tipoDocumento, string $numeroDocumento): ?Persona
+    {
+        return Persona::where('tipo_documento', strtoupper(trim($tipoDocumento)))
+            ->where('numero_documento', strtoupper(trim($numeroDocumento)))
+            ->first();
+    }
+
+    /**
+     * Reutiliza la persona del documento o la registra si no existe.
+     * Si el documento ya pertenece a alguien con otros nombres, se rechaza (RN02).
+     * La usan Clientes (CU06) y Reservas para los pasajeros (CU20, RN13).
+     */
+    public function obtenerOCrearPersona(array $datosPersona): Persona
+    {
+        $tipoDoc = strtoupper(trim((string) ($datosPersona['tipo_documento'] ?? '')));
+        $numDoc = strtoupper(trim((string) ($datosPersona['numero_documento'] ?? '')));
+        $nombres = trim((string) ($datosPersona['nombres'] ?? ''));
+        $apellidos = trim((string) ($datosPersona['apellidos'] ?? ''));
+
+        // Una persona ya registrada se reutiliza aunque su documento sea de datos heredados con otro formato;
+        // el formato completo solo se exige al registrar personas nuevas.
+        $existente = ($tipoDoc !== '' && $numDoc !== '') ? $this->buscarPersonaPorDocumento($tipoDoc, $numDoc) : null;
+        if (!$existente) {
+            $this->validador->validar($datosPersona);
+        }
+        if ($existente) {
+            $mismo = fn ($a, $b) => mb_strtolower(trim($a)) === mb_strtolower(trim($b));
+            if (!$mismo($existente->nombres, $nombres) || !$mismo($existente->apellidos, $apellidos)) {
+                throw new \InvalidArgumentException(
+                    "El documento {$tipoDoc} {$numDoc} ya pertenece a otra persona registrada con diferentes nombres."
+                );
+            }
+            return $existente;
+        }
+
+        return Persona::create([
+            'tipo_documento' => $tipoDoc,
+            'numero_documento' => $numDoc,
+            'nombres' => $nombres,
+            'apellidos' => $apellidos,
+            'fecha_nacimiento' => !empty($datosPersona['fecha_nacimiento']) ? $datosPersona['fecha_nacimiento'] : null,
+            'nacionalidad' => !empty($datosPersona['nacionalidad']) ? strtoupper(trim($datosPersona['nacionalidad'])) : 'PERUANA',
+            'genero' => $datosPersona['genero'] ?? null,
+            'telefono' => $datosPersona['telefono'] ?? null,
+            'correo' => $datosPersona['correo'] ?? null,
+            'activo' => true,
+        ]);
+    }
+
     public function registrar(array $datosPersona, string $tipoCliente, int $idUsuario): Cliente
     {
         // 1. Validar reglas de persona
@@ -58,38 +110,13 @@ class ClienteService
         }
 
         return DB::transaction(function () use ($datosPersona, $tipoDoc, $numDoc, $tipoCliente, $idUsuario) {
-            // Verificar si la persona ya existe en la base de datos
-            $personaExistente = Persona::where('tipo_documento', $tipoDoc)
-                ->where('numero_documento', $numDoc)
-                ->first();
-
-            if ($personaExistente) {
-                // Si ya es cliente:
-                if (Cliente::where('id_persona', $personaExistente->id_persona)->exists()) {
-                    throw new \InvalidArgumentException('La persona ya está registrada como cliente.');
-                }
-
-                // Verificar consistencia de nombres
-                if (strcasecmp($personaExistente->nombres, trim($datosPersona['nombres'])) !== 0 ||
-                    strcasecmp($personaExistente->apellidos, trim($datosPersona['apellidos'])) !== 0) {
-                    throw new \InvalidArgumentException('El documento ya pertenece a otra persona registrada con diferentes nombres.');
-                }
-
-                $persona = $personaExistente;
-            } else {
-                $persona = Persona::create([
-                    'tipo_documento' => $tipoDoc,
-                    'numero_documento' => $numDoc,
-                    'nombres' => trim($datosPersona['nombres']),
-                    'apellidos' => trim($datosPersona['apellidos']),
-                    'fecha_nacimiento' => !empty($datosPersona['fecha_nacimiento']) ? $datosPersona['fecha_nacimiento'] : null,
-                    'nacionalidad' => !empty($datosPersona['nacionalidad']) ? strtoupper(trim($datosPersona['nacionalidad'])) : 'PERUANA',
-                    'genero' => $datosPersona['genero'] ?? null,
-                    'telefono' => $datosPersona['telefono'] ?? null,
-                    'correo' => $datosPersona['correo'] ?? null,
-                    'activo' => true,
-                ]);
+            // Si la persona ya existe y ya es cliente, no se registra de nuevo (RN02)
+            $personaExistente = $this->buscarPersonaPorDocumento($tipoDoc, $numDoc);
+            if ($personaExistente && Cliente::where('id_persona', $personaExistente->id_persona)->exists()) {
+                throw new \InvalidArgumentException('La persona ya está registrada como cliente.');
             }
+
+            $persona = $this->obtenerOCrearPersona($datosPersona);
 
             // Crear el registro de cliente
             $cliente = Cliente::create([

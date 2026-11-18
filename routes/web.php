@@ -11,6 +11,7 @@ use App\Modules\Catalogo\Controllers\SalidaController;
 use App\Modules\Ventas\Controllers\CotizacionController;
 use App\Modules\Ventas\Controllers\ReservaController;
 use App\Modules\Finanzas\Controllers\PagoController;
+use App\Modules\Finanzas\Controllers\WebhookPasarelaController;
 use App\Modules\Reportes\Controllers\ReporteController;
 use App\Modules\PortalCliente\Controllers\PortalClienteController;
 use App\Modules\PortalCliente\Controllers\RegistroClienteController;
@@ -21,6 +22,11 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/captcha/refresh', [AuthController::class, 'refreshCaptcha'])->name('captcha.refresh');
 Route::get('/registro', [RegistroClienteController::class, 'showRegistro'])->name('registro');
 Route::post('/registro', [RegistroClienteController::class, 'registrar'])->name('registro.post');
+
+// --- Webhook de la pasarela de pagos (sin sesión; exento de CSRF en bootstrap/app.php) ---
+Route::post('/webhooks/pasarela', WebhookPasarelaController::class)
+    ->middleware('throttle:60,1')
+    ->name('webhooks.pasarela');
 
 // --- Rutas Protegidas por Autenticación ---
 Route::middleware(['auth'])->group(function () {
@@ -48,10 +54,19 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/tours', [ProductoController::class, 'index'])->name('tours.index');
         Route::post('/tours', [ProductoController::class, 'store'])->name('tours.store');
         Route::post('/tours/{id}/precio', [ProductoController::class, 'cambiarPrecio'])->name('tours.precio');
+        Route::post('/tours/{id}/editar', [ProductoController::class, 'update'])->name('tours.update');
+        Route::post('/tours/{id}/toggle', [ProductoController::class, 'toggleEstado'])->name('tours.toggle');
+        // Composición del producto (CU10)
+        Route::get('/tours/{id}/composicion', [ProductoController::class, 'composicion'])->name('tours.composicion');
+        Route::post('/tours/{id}/destinos', [ProductoController::class, 'asignarDestino'])->name('tours.destinos.asignar');
+        Route::post('/tours/{id}/destinos/{idDestino}/quitar', [ProductoController::class, 'quitarDestino'])->name('tours.destinos.quitar');
+        Route::post('/tours/{id}/servicios', [ProductoController::class, 'asignarServicio'])->name('tours.servicios.asignar');
+        Route::post('/tours/{id}/servicios/{idServicio}/quitar', [ProductoController::class, 'quitarServicio'])->name('tours.servicios.quitar');
 
         // Salidas y Cupos (CU12, CU13, CU14)
         Route::get('/salidas', [SalidaController::class, 'index'])->name('salidas.index');
         Route::post('/salidas', [SalidaController::class, 'store'])->name('salidas.store');
+        Route::post('/salidas/{id}/editar', [SalidaController::class, 'editar'])->name('salidas.editar');
         Route::post('/salidas/{id}/capacidad', [SalidaController::class, 'cambiarCapacidad'])->name('salidas.capacidad');
         Route::post('/salidas/{id}/cancelar', [SalidaController::class, 'cancelar'])->name('salidas.cancelar');
 
@@ -60,16 +75,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/cotizaciones/crear', [CotizacionController::class, 'create'])->name('cotizaciones.create');
         Route::post('/cotizaciones', [CotizacionController::class, 'store'])->name('cotizaciones.store');
         Route::get('/cotizaciones/{id}', [CotizacionController::class, 'show'])->name('cotizaciones.show');
+        Route::get('/cotizaciones/{id}/editar', [CotizacionController::class, 'edit'])->name('cotizaciones.edit');
+        Route::post('/cotizaciones/{id}/editar', [CotizacionController::class, 'update'])->name('cotizaciones.update');
         Route::post('/cotizaciones/{id}/estado', [CotizacionController::class, 'cambiarEstado'])->name('cotizaciones.estado');
-        Route::get('/cotizaciones/{id}/pdf', [CotizacionController::class, 'pdf'])->name('cotizaciones.pdf');
 
         // Reservas (CU20, CU21, CU22, CU23)
         Route::get('/reservas', [ReservaController::class, 'index'])->name('reservas.index');
+        Route::get('/reservas/nueva', [ReservaController::class, 'create'])->name('reservas.create');
+        Route::get('/reservas/persona', [ReservaController::class, 'buscarPersona'])->name('reservas.persona');
         Route::post('/reservas', [ReservaController::class, 'store'])->name('reservas.store');
         Route::get('/reservas/{id}', [ReservaController::class, 'show'])->name('reservas.show');
+        Route::get('/reservas/{id}/editar', [ReservaController::class, 'edit'])->name('reservas.edit');
+        Route::post('/reservas/{id}/modificar', [ReservaController::class, 'update'])->name('reservas.update');
         Route::post('/reservas/{id}/cancelar', [ReservaController::class, 'cancelar'])->name('reservas.cancelar');
         Route::post('/reservas/{id}/completar', [ReservaController::class, 'completar'])->name('reservas.completar');
     });
+
+    // Emisión de Documento PDF de Cotización (CU16) accesible para GERENTE, COUNTER y CLIENTE
+    Route::get('/cotizaciones/{id}/pdf', [CotizacionController::class, 'pdf'])
+        ->middleware('rol:GERENTE,COUNTER,CLIENTE')
+        ->name('cotizaciones.pdf');
 
     // --- Sub-módulos para GERENTE, COUNTER y CONTABILIDAD ---
     Route::middleware(['rol:GERENTE,COUNTER,CONTABILIDAD'])->group(function () {
@@ -84,6 +109,7 @@ Route::middleware(['auth'])->group(function () {
         // Validación / Rechazo de Pagos (CU19)
         Route::post('/pagos/{id}/validar', [PagoController::class, 'validar'])->name('pagos.validar');
         Route::post('/pagos/{id}/rechazar', [PagoController::class, 'rechazar'])->name('pagos.rechazar');
+        Route::post('/pagos/{id}/devolver', [PagoController::class, 'devolver'])->name('pagos.devolver');
 
         // Reportes Gerenciales y de Operación (CU24)
         Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
@@ -96,6 +122,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
         Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
         Route::post('/usuarios/{id}/toggle', [UsuarioController::class, 'toggleEstado'])->name('usuarios.toggle');
+        Route::post('/usuarios/{id}/password', [UsuarioController::class, 'cambiarContrasena'])->name('usuarios.password');
+        Route::post('/usuarios/{id}/editar', [UsuarioController::class, 'update'])->name('usuarios.update');
     });
 
     // --- Portal del Cliente / Turista (Autoconsulta B2C) ---
@@ -106,6 +134,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/mi-portal/reservas', [PortalClienteController::class, 'reservas'])->name('portal.reservas');
         Route::get('/mi-portal/reservas/{id}/voucher', [PortalClienteController::class, 'voucherPdf'])->name('portal.voucher');
         Route::post('/mi-portal/pagos', [PortalClienteController::class, 'subirPago'])->name('portal.pago');
+        Route::post('/mi-portal/pagos/online', [PortalClienteController::class, 'pagarOnline'])
+            ->middleware('throttle:10,1')
+            ->name('portal.pago.online');
         Route::get('/mi-portal/tours', [PortalClienteController::class, 'tours'])->name('portal.tours');
         Route::post('/mi-portal/solicitar', [PortalClienteController::class, 'solicitarCotizacion'])->name('portal.solicitar');
     });

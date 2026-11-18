@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Catalogo\Models\ProductoTuristico;
 use App\Modules\Catalogo\Models\Salida;
 use App\Modules\Clientes\Models\Cliente;
+use App\Modules\Ventas\Models\Cotizacion;
 use App\Modules\Ventas\Services\CotizacionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +40,64 @@ class CotizacionController extends Controller
         }])->get();
 
         return view('cotizaciones.create', compact('clientes', 'productos'));
+    }
+
+    /**
+     * CU15 – Editar cotización (solo VIGENTE).
+     */
+    public function edit(int $id)
+    {
+        $cotizacion = Cotizacion::with(['cliente.persona', 'detalles'])->findOrFail($id);
+        if ($cotizacion->estado !== 'VIGENTE') {
+            return redirect()->route('cotizaciones.index')->with('error', 'Solo se pueden editar cotizaciones VIGENTES.');
+        }
+
+        $idsSalidaActuales = $cotizacion->detalles->pluck('id_salida')->filter()->values();
+        $clientes = collect();
+        $productos = ProductoTuristico::where('activo', 1)->with(['salidas' => function ($q) use ($idsSalidaActuales) {
+            $q->where(function ($w) use ($idsSalidaActuales) {
+                $w->where(fn ($p) => $p->where('estado', 'PROGRAMADA')->where('fecha', '>=', now()->toDateString()))
+                  ->orWhereIn('id_salida', $idsSalidaActuales); // conservar la salida ya cotizada
+            })->orderBy('fecha', 'asc');
+        }])->get();
+
+        $itemsIniciales = $cotizacion->detalles->map(fn ($d) => [
+            'id_producto' => $d->id_producto,
+            'id_salida' => $d->id_salida,
+            'cantidad_pasajeros' => $d->cantidad_pasajeros,
+            'precio_unitario' => (float) $d->precio_unitario,
+        ])->values()->all();
+
+        return view('cotizaciones.create', compact('cotizacion', 'clientes', 'productos', 'itemsIniciales'));
+    }
+
+    public function update(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'vigencia_hasta' => 'nullable|date',
+            'observacion' => 'nullable|string|max:500',
+            'items' => 'required|array|min:1',
+            'items.*.id_producto' => 'required|integer|exists:producto_turistico,id_producto',
+            'items.*.id_salida' => 'nullable|integer|exists:salida,id_salida',
+            'items.*.cantidad_pasajeros' => 'required|integer|min:1',
+            'items.*.precio_unitario' => 'nullable|numeric|min:0',
+            'items.*.monto_adicional' => 'nullable|numeric|min:0',
+            'items.*.observacion' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $cotizacion = $this->cotizacionService->editar(
+                $id,
+                ['vigencia_hasta' => $validated['vigencia_hasta'] ?? null, 'observacion' => $validated['observacion'] ?? null],
+                array_values($validated['items']),
+                Auth::id()
+            );
+
+            return redirect()->route('cotizaciones.index')
+                ->with('success', "Cotización {$cotizacion->codigo} actualizada. Nuevo total: S/ {$cotizacion->total}.");
+        } catch (\InvalidArgumentException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
     }
 
     public function store(Request $request)
@@ -104,8 +163,17 @@ class CotizacionController extends Controller
 
     public function pdf($id)
     {
-        $pdf = $this->cotizacionService->generarPdf((int) $id);
         $cotizacion = $this->cotizacionService->obtenerPorId((int) $id);
+
+        $usuario = Auth::user();
+        if ($usuario && $usuario->tieneRol('CLIENTE')) {
+            $cliente = $usuario->cliente;
+            if (!$cliente || (int) $cotizacion->id_cliente !== (int) $cliente->id_cliente) {
+                abort(403, 'No tiene permisos suficientes para acceder a esta cotización.');
+            }
+        }
+
+        $pdf = $this->cotizacionService->generarPdf((int) $id);
 
         return $pdf->download("Cotizacion_{$cotizacion->codigo}.pdf");
     }

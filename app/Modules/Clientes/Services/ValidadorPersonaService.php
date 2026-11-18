@@ -7,9 +7,10 @@ class ValidadorPersonaService
     /**
      * Valida los datos personales según las reglas de negocio (RN02).
      *
+     * @param bool $validarDocumento false para datos heredados cuyo documento no cambia (se valida el resto).
      * @throws \InvalidArgumentException Si algún campo no cumple las reglas.
      */
-    public function validar(array $datos): void
+    public function validar(array $datos, bool $validarDocumento = true): void
     {
         $tipoDoc = strtoupper(trim($datos['tipo_documento'] ?? ''));
         $numDoc = trim($datos['numero_documento'] ?? '');
@@ -19,7 +20,9 @@ class ValidadorPersonaService
         $correo = trim($datos['correo'] ?? '');
 
         // 1. Validar Tipo y Número de Documento
-        $this->validarDocumento($tipoDoc, $numDoc);
+        if ($validarDocumento) {
+            $this->validarDocumento($tipoDoc, $numDoc);
+        }
 
         // 2. Validar Nombres y Apellidos
         $this->validarNombre($nombres, 'nombres');

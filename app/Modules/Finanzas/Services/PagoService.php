@@ -17,7 +17,7 @@ class PagoService
     {
         return (float) Pago::where('id_cotizacion', $idCotizacion)
             ->where('estado', 'VALIDADO')
-            ->sum('monto_base');
+            ->sum(DB::raw('monto_base - monto_base_devuelto')); // descuenta devoluciones
     }
 
     public function saldoPendiente(int $idCotizacion): float
@@ -75,7 +75,7 @@ class PagoService
             // Validar que suma de montos no rechazados no exceda el total
             $acumuladoNoRechazado = (float) Pago::where('id_cotizacion', $idCotizacion)
                 ->whereIn('estado', ['PENDIENTE_VALIDACION', 'VALIDADO'])
-                ->sum('monto_base');
+                ->sum(DB::raw('monto_base - monto_base_devuelto'));
 
             if (($acumuladoNoRechazado + $montoBase) > ((float) $cotizacion->total + 0.01)) {
                 $maximoPermitido = max(0.0, round((float) $cotizacion->total - $acumuladoNoRechazado, 2));
@@ -85,6 +85,16 @@ class PagoService
             $metodo = MetodoPago::findOrFail((int) $datos['id_metodo_pago']);
             if (!$metodo->activo) {
                 throw new InvalidArgumentException("El método de pago seleccionado no está activo.");
+            }
+
+            // RN11 / CU18 3a: los pagos que requieren verificación llevan n.º de operación y comprobante.
+            if ($metodo->requiere_validacion) {
+                if (trim((string) ($datos['numero_operacion'] ?? '')) === '') {
+                    throw new InvalidArgumentException("Ingrese el número de operación del pago con {$metodo->nombre}.");
+                }
+                if (!$comprobante || !$comprobante->isValid()) {
+                    throw new InvalidArgumentException("Adjunte el comprobante del pago con {$metodo->nombre} (imagen o PDF, máx. 5 MB).");
+                }
             }
 
             $recargo = 0.00;

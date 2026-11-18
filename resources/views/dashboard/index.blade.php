@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Inicio')
-@section('page_title', 'Inicio — Resumen Operativo')
+@section('page_title', 'Inicio')
 
 @section('content')
 <div class="container-fluid">
@@ -11,7 +11,7 @@
         <p class="text-muted small">Resumen de operaciones y estado del día de hoy en 18 Grados Sur.</p>
     </div>
 
-    <!-- Tarjetas de Indicadores del Día (CU02) -->
+    <!-- Tarjetas de Indicadores del Día -->
     <div class="row g-3 mb-4">
         <!-- Reservas Hoy -->
         <div class="col-md-3">
@@ -84,7 +84,7 @@
             <div class="card border-0 shadow-sm rounded-3 h-100">
                 <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold m-0 text-dark">
-                        <i class="bi bi-bar-chart-line-fill me-2 text-primary"></i> EVOLUCIÓN DE VENTAS (SOLES)
+                        <i class="bi bi-bar-chart-line-fill me-2 text-primary"></i> Evolución de ventas (S/)
                     </h6>
                     <span class="badge bg-light text-primary border">Histórico Mensual</span>
                 </div>
@@ -99,7 +99,7 @@
             <div class="card border-0 shadow-sm rounded-3 h-100">
                 <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold m-0 text-dark">
-                        <i class="bi bi-pie-chart-fill me-2 text-success"></i> DEMANDA POR TOUR
+                        <i class="bi bi-pie-chart-fill me-2 text-success"></i> Demanda por tour
                     </h6>
                     <span class="badge bg-light text-success border">Pasajeros Totales</span>
                 </div>
@@ -116,7 +116,7 @@
     <div class="card border-0 shadow-sm rounded-3">
         <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
             <h6 class="fw-bold m-0 text-dark">
-                <i class="bi bi-calendar3 me-2 text-primary"></i> PRÓXIMAS SALIDAS PROGRAMADAS
+                <i class="bi bi-calendar3 me-2 text-primary"></i> Próximas salidas programadas
             </h6>
             <span class="badge bg-light text-secondary border">Vista en tiempo real</span>
         </div>

@@ -97,6 +97,9 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // La sesión de PostgreSQL usa la misma zona que la app, así CURRENT_TIMESTAMP
+            // y now() de Laravel guardan la misma hora (columnas timestamp sin zona).
+            'timezone' => env('DB_TIMEZONE', 'America/Lima'),
         ],
 
         'sqlsrv' => [

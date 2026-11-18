@@ -1,0 +1,55 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: 18experience_app
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: db_18_experience
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      APP_URL: http://localhost:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - 18exp-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: 18experience_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: db_18_experience
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      TZ: America/Lima
+    ports:
+      # Expuesto en 5433 en el host para no colisionar con PostgreSQL local (5432)
+      - "5433:5432"
+    volumes:
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+      - 18exp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db_18_experience"]
+      interval: 4s
+      timeout: 5s
+      retries: 5
+    networks:
+      - 18exp-network
+
+volumes:
+  18exp_pgdata:
+    driver: local
+
+networks:
+  18exp-network:
+    driver: bridge

@@ -1,11 +1,12 @@
 @extends('layouts.app')
 
 @section('title', 'Reservas Turísticas — 18 Grados Sur')
+@section('page_title', 'Reservas')
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-calendar-check text-primary me-2"></i>Gestión de Reservas (CU20–CU23)</h2>
+        <h2 class="fw-bold text-dark mb-1">Reservas</h2>
         <p class="text-muted mb-0">Confirmación de reservas con bloqueo pesimista de cupos (lockForUpdate), manifiesto y cierre.</p>
     </div>
     <div>
@@ -91,9 +92,12 @@
                             </a>
                             @endif
                             @if($r->estado === 'CONFIRMADA')
+                            <a href="{{ route('reservas.edit', $r->id_reserva) }}" class="btn btn-sm btn-outline-secondary" title="Modificar pasajeros y recojo">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
                             <form action="{{ route('reservas.completar', $r->id_reserva) }}" method="POST" class="d-inline">
                                 @csrf
-                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Marcar como Completada" onclick="return confirm('¿Completar la reserva?')">
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Marcar como Completada" data-confirm="Solo se completa si el saldo está pagado y el viaje ya se realizó." data-confirm-title="¿Marcar la reserva como completada?" data-confirm-ok="Sí, completar">
                                     <i class="bi bi-check2-all"></i>
                                 </button>
                             </form>
@@ -122,41 +126,35 @@
     @endif
 </div>
 
-<!-- Modal Confirmar Reserva desde Cotización -->
+<!-- Modal Generar Reserva (CU20): elegir la cotización y continuar al registro de pasajeros -->
 <div class="modal fade" id="modalConfirmarReserva" tabindex="-1">
-    <div class="modal-dialog">
-        <form method="POST" action="{{ route('reservas.store') }}">
-            @csrf
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="GET" action="{{ route('reservas.create') }}" class="w-100">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-calendar-plus me-2 text-primary"></i>Confirmar Reserva (CU20)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-calendar-plus me-2 text-primary"></i>Generar reserva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info py-2 small mb-3">
-                        <i class="bi bi-info-circle me-1"></i> Se requiere que la cotización esté en estado <strong>ACEPTADA</strong> y cuente con al menos el <strong>50% de anticipo en pagos validados</strong> (RN05). Al confirmar se bloquearán los cupos en la salida mediante transacción concurrente.
+                        <i class="bi bi-info-circle me-1"></i> La cotización debe estar <strong>aceptada</strong> y tener el <strong>anticipo validado</strong>. En el siguiente paso registrarás a cada pasajero y su punto de recojo.
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Cotización Aceptada <span class="text-danger">*</span></label>
-                        <select name="id_cotizacion" class="form-select" required>
-                            <option value="">-- Seleccione Cotización Lista --</option>
-                            @foreach($cotizacionesListas as $cot)
-                            <option value="{{ $cot->id_cotizacion }}">
-                                {{ $cot->codigo }} — {{ $cot->cliente->persona->nombreCompleto() }} (Total: S/ {{ number_format($cot->total, 2) }})
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Observaciones / Notas de Reserva</label>
-                        <textarea name="observacion" rows="3" class="form-control" placeholder="Punto de encuentro, hora especial de recojo, etc."></textarea>
-                    </div>
+                    <label class="form-label fw-semibold">Cotización aceptada <span class="text-danger">*</span></label>
+                    <select name="cotizacion" class="form-select" required>
+                        <option value="">-- Selecciona una cotización --</option>
+                        @foreach($cotizacionesListas as $cot)
+                        <option value="{{ $cot->id_cotizacion }}">
+                            {{ $cot->codigo }} — {{ $cot->cliente->persona->nombreCompleto() }} ({{ $cot->detalles->sum('cantidad_pasajeros') }} pax · S/ {{ number_format($cot->total, 2) }})
+                        </option>
+                        @endforeach
+                    </select>
+                    @if($cotizacionesListas->isEmpty())
+                        <div class="form-text">No hay cotizaciones aceptadas pendientes de reserva.</div>
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i> Confirmar Reserva</button>
+                    <button type="submit" class="btn btn-primary">Continuar <i class="bi bi-arrow-right ms-1"></i></button>
                 </div>
             </div>
         </form>
@@ -170,7 +168,7 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Cancelar Reserva (CU22)</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Cancelar Reserva</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -192,7 +190,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold"><i class="bi bi-people-fill me-2 text-primary"></i>Manifiesto de Pasajeros y Salidas (CU21)</h5>
+                <h5 class="modal-title fw-bold"><i class="bi bi-people-fill me-2 text-primary"></i>Manifiesto de Pasajeros y Salidas</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="modalManifiestoBody">

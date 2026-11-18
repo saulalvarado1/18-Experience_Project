@@ -1,11 +1,16 @@
 @extends('layouts.app')
 
 @section('title', 'Tours y Paquetes')
-@section('page_title', 'Catálogo de Tours y Paquetes')
+@section('page_title', 'Tours y paquetes')
 
 @section('content')
 <div class="container-fluid">
-    <!-- Filtros y Botón Nuevo Producto (CU09) -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1">Tours y paquetes</h2>
+        <p class="text-muted mb-0">Catálogo de productos, precios y porcentaje de reserva.</p>
+    </div>
+
+    <!-- Filtros y Botón Nuevo Producto -->
     <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-body p-3">
             <form action="{{ route('tours.index') }}" method="GET" class="row g-2 align-items-center">
@@ -36,8 +41,8 @@
                     </button>
                 </div>
                 <div class="col-md-2 text-end">
-                    <button type="button" class="btn btn-primary w-100 fw-semibold" style="background-color: #1e3a8a; border: none;" data-bs-toggle="modal" data-bs-target="#modalTour">
-                        <i class="bi bi-plus-circle-fill me-1"></i> NUEVO TOUR
+                    <button type="button" class="btn btn-primary w-100 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalTour">
+                        <i class="bi bi-plus-circle-fill me-1"></i> Nuevo tour
                     </button>
                 </div>
             </form>
@@ -88,6 +93,22 @@
                                 </td>
                                 <td class="pe-4 text-end">
                                     <div class="btn-group btn-group-sm">
+                                        @php $datosTour = $p->only(['id_producto', 'codigo', 'nombre', 'tipo_producto', 'moneda', 'porcentaje_reserva', 'minimo_pasajeros', 'duracion_dias', 'descripcion', 'itinerario']); @endphp
+                                        <button type="button" class="btn btn-outline-secondary" title="Editar tour" onclick='abrirModalEditarTour(@json($datosTour))'>
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <a href="{{ route('tours.composicion', $p->id_producto) }}" class="btn btn-outline-primary" title="Destinos y servicios del tour">
+                                            <i class="bi bi-diagram-3"></i> Composición
+                                        </a>
+                                        <form method="POST" action="{{ route('tours.toggle', $p->id_producto) }}" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn {{ $p->activo ? 'btn-outline-danger' : 'btn-outline-success' }}" title="{{ $p->activo ? 'Desactivar' : 'Activar' }} tour"
+                                                data-confirm="{{ $p->activo ? 'El tour dejará de ofrecerse y de poder cotizarse.' : 'El tour volverá a ofrecerse y podrá cotizarse.' }}"
+                                                data-confirm-title="¿{{ $p->activo ? 'Desactivar' : 'Activar' }} el tour?" data-confirm-ok="Sí, {{ $p->activo ? 'desactivar' : 'activar' }}"
+                                                data-confirm-variant="{{ $p->activo ? 'warning' : 'success' }}">
+                                                <i class="bi {{ $p->activo ? 'bi-toggle-on' : 'bi-toggle-off' }}"></i>
+                                            </button>
+                                        </form>
                                         @if (auth()->user()->tieneRol('GERENTE'))
                                             <button type="button" class="btn btn-outline-warning text-dark" title="Modificar Precio Base (Auditado)" onclick='abrirModalPrecio(@json($p))'>
                                                 <i class="bi bi-tag-fill"></i> Precio
@@ -112,6 +133,73 @@
                 {{ $productos->withQueryString()->links() }}
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Modal: Editar Tour (CU09 flujo 1a; el precio se cambia en CU11) -->
+<div class="modal fade" id="modalEditarTour" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form method="POST" id="formEditarTour" action="" class="w-100">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-primary"></i>Editar tour o paquete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Código</label>
+                            <input type="text" class="form-control text-uppercase" name="codigo" id="et_codigo" maxlength="30" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-semibold">Nombre</label>
+                            <input type="text" class="form-control" name="nombre" id="et_nombre" maxlength="180" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Tipo</label>
+                            <select class="form-select" name="tipo_producto" id="et_tipo_producto" required>
+                                <option value="TOUR_LOCAL">Tour Local (Tacna)</option>
+                                <option value="PAQUETE_NACIONAL">Paquete Nacional</option>
+                                <option value="PAQUETE_INTERNACIONAL">Paquete Internacional</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold">Moneda</label>
+                            <select class="form-select" name="moneda" id="et_moneda" required>
+                                <option value="PEN">PEN</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold">% reserva</label>
+                            <input type="number" step="0.01" min="1" max="100" class="form-control" name="porcentaje_reserva" id="et_porcentaje_reserva" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold">Mín. pax</label>
+                            <input type="number" min="1" class="form-control" name="minimo_pasajeros" id="et_minimo_pasajeros" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold">Días</label>
+                            <input type="number" min="1" class="form-control" name="duracion_dias" id="et_duracion_dias" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Descripción</label>
+                            <textarea class="form-control" name="descripcion" id="et_descripcion" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Itinerario</label>
+                            <textarea class="form-control" name="itinerario" id="et_itinerario" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-text mt-2">El precio base se cambia con el botón "Precio" (solo Gerente, auditado).</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Guardar cambios</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -182,7 +270,7 @@
 
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary fw-semibold" style="background-color: #1e3a8a;">Guardar Producto</button>
+                    <button type="submit" class="btn btn-primary fw-semibold">Guardar Producto</button>
                 </div>
             </form>
         </div>
@@ -243,6 +331,13 @@
         } else {
             input.min = "10";
         }
+    }
+
+    function abrirModalEditarTour(p) {
+        ['codigo', 'nombre', 'tipo_producto', 'moneda', 'porcentaje_reserva', 'minimo_pasajeros', 'duracion_dias', 'descripcion', 'itinerario']
+            .forEach(c => { document.getElementById('et_' + c).value = p[c] ?? ''; });
+        document.getElementById('formEditarTour').action = '/tours/' + p.id_producto + '/editar';
+        new bootstrap.Modal(document.getElementById('modalEditarTour')).show();
     }
 
     function abrirModalPrecio(producto) {

@@ -42,6 +42,17 @@ class SalidaController extends Controller
         }
     }
 
+    public function editar(Request $request, int $id)
+    {
+        try {
+            $this->salidaService->editarSalida($id, $request->only(['fecha', 'hora', 'observacion']), Auth::id());
+
+            return redirect()->route('salidas.index')->with('success', 'Salida actualizada y registrada en auditoría.');
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
     public function cambiarCapacidad(Request $request, int $id)
     {
         try {

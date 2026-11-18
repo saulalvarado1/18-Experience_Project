@@ -16,8 +16,8 @@ class LoginAndDashboardTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200);
-        $response->assertSee('Iniciar Sesión');
-        $response->assertSee('18 EXPERIENCE');
+        $response->assertSee('Iniciar sesión');
+        $response->assertSee('18 Experience');
         $response->assertSessionHas('login_captcha');
     }
 
@@ -91,7 +91,7 @@ class LoginAndDashboardTest extends TestCase
             $dashboardResponse->assertSee('RESERVAS HOY');
             $dashboardResponse->assertSee('SALIDAS HOY');
             $dashboardResponse->assertSee('PAGOS POR VALIDAR');
-            $dashboardResponse->assertSee('PRÓXIMAS SALIDAS PROGRAMADAS');
+            $dashboardResponse->assertSee('Próximas salidas programadas');
 
             // 3. Cerrar sesión (CU03)
             $logoutResponse = $this->post('/logout');

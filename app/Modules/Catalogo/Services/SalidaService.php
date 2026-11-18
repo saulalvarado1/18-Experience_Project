@@ -11,7 +11,8 @@ class SalidaService
     public function listarSalidas(?string $desde = null, ?string $hasta = null, ?int $idProducto = null, ?string $estado = 'TODOS')
     {
         $query = DB::table('vw_disponibilidad_salida as v')
-            ->select('v.*');
+            ->join('salida as s', 's.id_salida', '=', 'v.id_salida')
+            ->select('v.*', 's.observacion');
 
         if (!empty($desde)) {
             $query->whereDate('v.fecha', '>=', $desde);
@@ -32,6 +33,64 @@ class SalidaService
         return $query->orderBy('v.fecha', 'desc')
                      ->orderBy('v.hora', 'asc')
                      ->paginate(15);
+    }
+
+    /**
+     * CU12 flujo 1a – Editar salida: fecha, hora y observación. No se permite si está CANCELADA o FINALIZADA
+     * y se vuelve a validar la duplicidad (RN06). La capacidad se cambia con CU13.
+     */
+    public function editarSalida(int $idSalida, array $datos, int $idUsuario): Salida
+    {
+        $fecha = trim((string) ($datos['fecha'] ?? ''));
+        $hora = trim((string) ($datos['hora'] ?? ''));
+        $observacion = trim((string) ($datos['observacion'] ?? ''));
+
+        if ($fecha === '' || $hora === '') {
+            throw new \InvalidArgumentException('Ingrese la fecha y la hora de la salida.');
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) || !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $hora)) {
+            throw new \InvalidArgumentException('Formato de fecha u hora inválido.');
+        }
+        if (mb_strlen($observacion) > 500) {
+            throw new \InvalidArgumentException('La observación no debe superar 500 caracteres.');
+        }
+
+        return DB::transaction(function () use ($idSalida, $fecha, $hora, $observacion, $idUsuario) {
+            $salida = Salida::whereKey($idSalida)->lockForUpdate()->firstOrFail();
+
+            if (in_array($salida->estado, ['CANCELADA', 'FINALIZADA'], true)) {
+                throw new \InvalidArgumentException("No se puede editar una salida {$salida->estado}.");
+            }
+
+            $horaNormalizada = strlen($hora) === 5 ? "{$hora}:00" : $hora;
+            $duplicada = Salida::where('id_producto', $salida->id_producto)
+                ->where('id_salida', '!=', $salida->id_salida)
+                ->where('fecha', $fecha)
+                ->where('hora', $horaNormalizada)
+                ->where('estado', '<>', 'CANCELADA')
+                ->exists();
+            if ($duplicada) {
+                throw new \InvalidArgumentException('Ya existe otra salida de este tour en la misma fecha y hora.');
+            }
+
+            $antes = $salida->fecha->format('Y-m-d') . ' ' . substr((string) $salida->hora, 0, 5);
+            $salida->fecha = $fecha;
+            $salida->hora = $horaNormalizada;
+            $salida->observacion = $observacion !== '' ? $observacion : null;
+            $salida->save();
+
+            $ocupados = (int) $salida->disponibilidad->ocupados;
+            Auditoria::registrar(
+                $idUsuario,
+                'EDITAR_SALIDA',
+                'salida',
+                $salida->id_salida,
+                "Salida editada: {$antes} → {$fecha} " . substr($horaNormalizada, 0, 5)
+                . ($ocupados > 0 ? " (afecta a {$ocupados} pasajero(s) reservados)" : '')
+            );
+
+            return $salida;
+        });
     }
 
     public function programarSalida(array $datos, int $idUsuario): Salida

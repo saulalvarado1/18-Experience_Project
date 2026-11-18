@@ -3,22 +3,28 @@
 namespace App\Modules\Finanzas\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Finanzas\Gateways\GatewayException;
 use App\Modules\Finanzas\Models\MetodoPago;
 use App\Modules\Finanzas\Models\Pago;
+use App\Modules\Finanzas\Services\PagoOnlineService;
 use App\Modules\Finanzas\Services\PagoService;
 use App\Modules\Ventas\Models\Cotizacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Exception;
+use InvalidArgumentException;
 
 class PagoController extends Controller
 {
     protected PagoService $pagoService;
+    protected PagoOnlineService $pagoOnlineService;
 
-    public function __construct(PagoService $pagoService)
+    public function __construct(PagoService $pagoService, PagoOnlineService $pagoOnlineService)
     {
         $this->pagoService = $pagoService;
+        $this->pagoOnlineService = $pagoOnlineService;
     }
 
     public function index(Request $request)
@@ -31,7 +37,10 @@ class PagoController extends Controller
         ];
 
         $pagos = $this->pagoService->listar($filtros);
-        $metodos = MetodoPago::where('activo', 1)->get();
+        // PASARELA_ONLINE solo lo registra la pasarela (checkout/webhook), nunca a mano.
+        $metodos = MetodoPago::where('activo', true)
+            ->where('nombre', '!=', config('services.pasarela.metodo_pago'))
+            ->get();
         $cotizaciones = Cotizacion::whereIn('estado', ['ACEPTADA', 'VIGENTE'])
             ->with('cliente.persona')
             ->orderBy('id_cotizacion', 'desc')
@@ -45,7 +54,13 @@ class PagoController extends Controller
     {
         $validated = $request->validate([
             'id_cotizacion' => 'required|integer|exists:cotizacion,id_cotizacion',
-            'id_metodo_pago' => 'required|integer|exists:metodo_pago,id_metodo_pago',
+            'id_metodo_pago' => [
+                'required',
+                'integer',
+                Rule::exists('metodo_pago', 'id_metodo_pago')
+                    ->where('activo', true)
+                    ->whereNot('nombre', config('services.pasarela.metodo_pago')),
+            ],
             'monto_base' => 'required|numeric|min:0.01',
             'numero_operacion' => 'nullable|string|max:100',
             'comprobante' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
@@ -93,6 +108,35 @@ class PagoController extends Controller
             $this->pagoService->rechazar((int) $id, $request->input('motivo'), Auth::id());
             return redirect()->route('pagos.index')->with('warning', "Pago ID #{$id} ha sido rechazado.");
         } catch (Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Devolución total o parcial de un pago online a través de la pasarela (GERENTE / CONTABILIDAD).
+     */
+    public function devolver($id, Request $request)
+    {
+        $validated = $request->validate([
+            'monto' => 'required|numeric|min:0.01',
+            'motivo' => 'required|string|min:3|max:500',
+        ]);
+
+        try {
+            $devolucion = $this->pagoOnlineService->devolver(
+                (int) $id,
+                (float) $validated['monto'],
+                $validated['motivo'],
+                Auth::id()
+            );
+
+            return redirect()->route('pagos.index')->with('success',
+                'Devolución de S/ ' . number_format((float) $devolucion->monto, 2)
+                . " registrada en la pasarela (operación {$devolucion->numero_operacion}). "
+                . 'El cliente la verá en su estado de cuenta según los plazos de su banco.');
+        } catch (GatewayException $e) {
+            return back()->with('error', 'La pasarela no respondió; no se realizó ninguna devolución. Inténtalo más tarde.');
+        } catch (InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
     }

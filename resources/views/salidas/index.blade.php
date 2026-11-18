@@ -1,11 +1,16 @@
 @extends('layouts.app')
 
 @section('title', 'Salidas')
-@section('page_title', 'Programación de Salidas y Cupos')
+@section('page_title', 'Salidas y cupos')
 
 @section('content')
 <div class="container-fluid">
-    <!-- Filtros y Botón Programar Salida (CU12) -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1">Salidas y cupos</h2>
+        <p class="text-muted mb-0">Programa fechas de salida y controla la capacidad de cada una.</p>
+    </div>
+
+    <!-- Filtros y Botón Programar Salida -->
     <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-body p-3">
             <form action="{{ route('salidas.index') }}" method="GET" class="row g-2 align-items-center">
@@ -44,8 +49,8 @@
                     </button>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="button" class="btn btn-primary btn-sm w-100 fw-semibold mt-auto" style="height: 31px; background-color: #1e3a8a; border: none;" data-bs-toggle="modal" data-bs-target="#modalSalida">
-                        <i class="bi bi-calendar-plus me-1"></i> PROGRAMAR
+                    <button type="button" class="btn btn-primary btn-sm w-100 fw-semibold mt-auto" style="height: 31px;" data-bs-toggle="modal" data-bs-target="#modalSalida">
+                        <i class="bi bi-calendar-plus me-1"></i> Programar
                     </button>
                 </div>
             </form>
@@ -100,6 +105,9 @@
                                 <td class="pe-4 text-end">
                                     <div class="btn-group btn-group-sm">
                                         @if (!in_array($s->estado, ['CANCELADA', 'FINALIZADA']))
+                                            <button type="button" class="btn btn-outline-primary" title="Editar fecha, hora u observación" onclick='abrirModalEditar(@json($s))'>
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
                                             <button type="button" class="btn btn-outline-secondary" title="Cambiar Capacidad (Auditado)" onclick='abrirModalCapacidad(@json($s))'>
                                                 <i class="bi bi-people"></i> Capacidad
                                             </button>
@@ -173,7 +181,7 @@
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary fw-semibold" style="background-color: #1e3a8a;">Guardar Salida</button>
+                    <button type="submit" class="btn btn-primary fw-semibold">Guardar Salida</button>
                 </div>
             </form>
         </div>
@@ -217,14 +225,14 @@
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary fw-semibold" style="background-color: #1e3a8a;">Actualizar Capacidad</button>
+                    <button type="submit" class="btn btn-primary fw-semibold">Actualizar Capacidad</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal: Cancelar Salida (CU14) -->
+<!-- Modal: Cancelar Salida -->
 <div class="modal fade" id="modalCancelar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow">
@@ -256,7 +264,60 @@
 @endsection
 
 @section('scripts')
+<!-- Modal Editar Salida (CU12) -->
+<div class="modal fade" id="modalEditarSalida" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" id="formEditarSalida" action="" class="w-100">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Editar salida</h5>
+                        <small class="text-muted" id="edit_detalle"></small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="edit_aviso" class="alert alert-warning py-2 small d-none">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Esta salida tiene <strong id="edit_ocupados"></strong> pasajero(s) reservados: avísales del cambio.
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <label class="form-label small fw-semibold" for="edit_fecha">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" name="fecha" id="edit_fecha" class="form-control" required>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-semibold" for="edit_hora">Hora <span class="text-danger">*</span></label>
+                            <input type="time" name="hora" id="edit_hora" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold" for="edit_observacion">Observación</label>
+                            <textarea name="observacion" id="edit_observacion" rows="2" class="form-control" maxlength="500"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-text mt-2">La capacidad se cambia con el botón "Capacidad".</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Guardar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+    function abrirModalEditar(s) {
+        document.getElementById('edit_detalle').textContent = s.producto || s.nombre_producto || s.codigo_producto;
+        document.getElementById('edit_fecha').value = String(s.fecha).substring(0, 10);
+        document.getElementById('edit_hora').value = String(s.hora).substring(0, 5);
+        document.getElementById('edit_observacion').value = s.observacion || '';
+        document.getElementById('edit_ocupados').textContent = s.cupos_ocupados;
+        document.getElementById('edit_aviso').classList.toggle('d-none', !(s.cupos_ocupados > 0));
+        document.getElementById('formEditarSalida').action = '/salidas/' + s.id_salida + '/editar';
+        new bootstrap.Modal(document.getElementById('modalEditarSalida')).show();
+    }
+
     function abrirModalCapacidad(s) {
         document.getElementById('cap_detalle').value = s.fecha + ' ' + s.hora.substring(0, 5) + ' - ' + (s.nombre_producto || s.producto || s.codigo_producto);
         document.getElementById('cap_actual').value = s.capacidad + ' asientos';

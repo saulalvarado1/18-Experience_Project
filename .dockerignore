@@ -1,0 +1,6 @@
+.git
+.github
+node_modules
+storage/logs/*.log
+docker/postgres/init
+*.bat

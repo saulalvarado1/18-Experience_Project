@@ -1,17 +1,29 @@
 @extends('layouts.app')
 
-@section('title', 'Nueva Cotización — 18 Grados Sur')
+@php
+    // Esta vista sirve para registrar (CU15) y para editar una cotización VIGENTE (CU15, flujo Editar).
+    $editando = isset($cotizacion);
+    $itemsIniciales = old('items', $itemsIniciales ?? []);
+@endphp
+
+@section('title', ($editando ? 'Editar cotización' : 'Nueva Cotización') . ' — 18 Grados Sur')
+@section('page_title', $editando ? 'Editar cotización' : 'Nueva cotización')
 
 @section('content')
 <div class="mb-4">
     <a href="{{ route('cotizaciones.index') }}" class="text-decoration-none text-muted mb-2 d-inline-block">
         <i class="bi bi-arrow-left me-1"></i> Volver a Cotizaciones
     </a>
-    <h2 class="fw-bold text-dark mb-1"><i class="bi bi-plus-circle text-primary me-2"></i>Emitir Nueva Cotización (CU15)</h2>
-    <p class="text-muted mb-0">Seleccione el cliente activo y añada tours con salidas programadas.</p>
+    @if($editando)
+        <h2 class="fw-bold text-dark mb-1">Editar cotización {{ $cotizacion->codigo }}</h2>
+        <p class="text-muted mb-0">Solo las cotizaciones vigentes se pueden editar. Los servicios se reemplazan por los de este formulario.</p>
+    @else
+        <h2 class="fw-bold text-dark mb-1">Nueva cotización</h2>
+        <p class="text-muted mb-0">Seleccione el cliente activo y añada tours con salidas programadas.</p>
+    @endif
 </div>
 
-<form method="POST" action="{{ route('cotizaciones.store') }}" id="formCotizacion">
+<form method="POST" action="{{ $editando ? route('cotizaciones.update', $cotizacion->id_cotizacion) : route('cotizaciones.store') }}" id="formCotizacion">
     @csrf
     <div class="row g-4">
         <div class="col-lg-4">
@@ -20,6 +32,9 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Cliente <span class="text-danger">*</span></label>
+                        @if($editando)
+                        <input type="text" class="form-control bg-light" readonly value="{{ $cotizacion->cliente->persona->numero_documento }} — {{ $cotizacion->cliente->persona->nombreCompleto() }}">
+                        @else
                         <select name="id_cliente" class="form-select" required>
                             <option value="">-- Seleccione un Cliente --</option>
                             @foreach($clientes as $cli)
@@ -28,17 +43,18 @@
                             </option>
                             @endforeach
                         </select>
+                        @endif
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Vigente hasta</label>
-                        <input type="date" name="vigencia_hasta" class="form-control" value="{{ old('vigencia_hasta', now()->addDays(7)->format('Y-m-d')) }}">
+                        <input type="date" name="vigencia_hasta" class="form-control" value="{{ old('vigencia_hasta', $editando && $cotizacion->vigencia_hasta ? $cotizacion->vigencia_hasta->format('Y-m-d') : now()->addDays(7)->format('Y-m-d')) }}">
                         <small class="text-muted">Por defecto: 7 días de vigencia.</small>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Observaciones</label>
-                        <textarea name="observacion" rows="3" class="form-control" placeholder="Notas internas o solicitudes del cliente">{{ old('observacion') }}</textarea>
+                        <textarea name="observacion" rows="3" class="form-control" placeholder="Notas internas o solicitudes del cliente">{{ old('observacion', $editando ? $cotizacion->observacion : '') }}</textarea>
                     </div>
 
                     <hr>
@@ -48,7 +64,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100 mt-3 shadow-sm py-2">
-                        <i class="bi bi-save me-1"></i> Emitir Cotización
+                        <i class="bi bi-save me-1"></i> {{ $editando ? 'Guardar cambios' : 'Emitir Cotización' }}
                     </button>
                 </div>
             </div>
@@ -86,8 +102,8 @@
                 <select class="form-select form-select-sm select-producto" required>
                     <option value="" data-precio="0">-- Seleccione Tour --</option>
                     @foreach($productos as $p)
-                    <option value="{{ $p->id_producto }}" data-precio="{{ $p->precio_base }}">
-                        {{ $p->codigo }} - {{ $p->nombre }} (S/ {{ number_format($p->precio_base, 2) }})
+                    <option value="{{ $p->id_producto }}" data-precio="{{ $p->precio_base }}" data-minimo="{{ max(1, (int) $p->minimo_pasajeros) }}">
+                        {{ $p->codigo }} - {{ $p->nombre }} (S/ {{ number_format($p->precio_base, 2) }}{{ $p->minimo_pasajeros > 1 ? ' · mín. ' . $p->minimo_pasajeros . ' pax' : '' }})
                     </option>
                     @endforeach
                 </select>
@@ -144,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
         lblTotal.textContent = `S/ ${total.toFixed(2)}`;
     }
 
-    function agregarFila() {
+    function agregarFila(inicial) {
         const clone = template.content.cloneNode(true);
         const row = clone.querySelector('.item-row');
         const idx = itemIndex++;
@@ -165,6 +181,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const opt = selectProd.options[selectProd.selectedIndex];
             const precio = opt.getAttribute('data-precio') || 0;
             inputPrecio.value = parseFloat(precio).toFixed(2);
+
+            // Mínimo de pasajeros del tour (RN09 / CU15)
+            const minimo = parseInt(opt.getAttribute('data-minimo')) || 1;
+            inputPasajeros.min = minimo;
+            if ((parseInt(inputPasajeros.value) || 0) < minimo) inputPasajeros.value = minimo;
 
             // Filtrar salidas correspondientes al producto
             const prodId = selectProd.value;
@@ -189,11 +210,25 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         container.appendChild(row);
+
+        // Precarga (edición o regreso con errores)
+        if (inicial && inicial.id_producto) {
+            selectProd.value = String(inicial.id_producto);
+            selectProd.dispatchEvent(new Event('change'));
+            selectSalida.value = inicial.id_salida ? String(inicial.id_salida) : '';
+            inputPasajeros.value = inicial.cantidad_pasajeros || 1;
+            if (inicial.precio_unitario) inputPrecio.value = parseFloat(inicial.precio_unitario).toFixed(2);
+        }
         recalcularTotales();
     }
 
-    btnAgregar.addEventListener('click', agregarFila);
-    agregarFila(); // inicializar con un ítem
+    btnAgregar.addEventListener('click', () => agregarFila());
+    const iniciales = Object.values(@json($itemsIniciales));
+    if (iniciales.length) {
+        iniciales.forEach(agregarFila);
+    } else {
+        agregarFila(); // inicializar con un ítem
+    }
 });
 </script>
 @endsection

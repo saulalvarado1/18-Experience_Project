@@ -28,6 +28,24 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+    | Pasarela de pagos online (módulo Finanzas). Driver disponible: culqi.
+    */
+    'pasarela' => [
+        'driver' => env('PAYMENT_GATEWAY', 'culqi'),
+        'metodo_pago' => 'PASARELA_ONLINE',
+    ],
+
+    'culqi' => [
+        'public_key' => env('CULQI_PUBLIC_KEY'),
+        'secret_key' => env('CULQI_SECRET_KEY'),
+        'api_url' => env('CULQI_API_URL', 'https://api.culqi.com/v2'),
+        // Credenciales Basic Auth configuradas en CulqiPanel > Eventos (opcionales pero recomendadas).
+        'webhook_user' => env('CULQI_WEBHOOK_USER'),
+        'webhook_password' => env('CULQI_WEBHOOK_PASSWORD'),
+        'timeout' => (int) env('CULQI_TIMEOUT', 30),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

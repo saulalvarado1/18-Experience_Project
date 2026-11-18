@@ -32,7 +32,7 @@ class DashboardController extends Controller
 
         $totalRecaudado = (float) DB::table('pago')
             ->where('estado', 'VALIDADO')
-            ->sum('monto_base');
+            ->sum(DB::raw('monto_base - monto_base_devuelto'));
 
         // 2. Próximas salidas obtenidas de la vista vw_disponibilidad_salida (CU02)
         $proximasSalidas = DB::table('vw_disponibilidad_salida')

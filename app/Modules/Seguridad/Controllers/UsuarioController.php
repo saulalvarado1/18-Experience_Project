@@ -8,27 +8,63 @@ use App\Modules\Seguridad\Models\Auditoria;
 use App\Modules\Seguridad\Models\Persona;
 use App\Modules\Seguridad\Models\Rol;
 use App\Modules\Seguridad\Models\Usuario;
+use App\Modules\Seguridad\Services\UsuarioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Exception;
+use InvalidArgumentException;
 
 class UsuarioController extends Controller
 {
     protected ValidadorPersonaService $validadorPersona;
+    protected UsuarioService $usuarioService;
 
-    public function __construct(ValidadorPersonaService $validadorPersona)
+    public function __construct(ValidadorPersonaService $validadorPersona, UsuarioService $usuarioService)
     {
         $this->validadorPersona = $validadorPersona;
+        $this->usuarioService = $usuarioService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $usuarios = Usuario::with(['persona', 'rol'])->orderBy('id_usuario', 'desc')->paginate(15);
-        $roles = Rol::where('activo', 1)->get();
+        $filtros = [
+            'buscar' => $request->query('buscar'),
+            'id_rol' => $request->query('id_rol') ? (int) $request->query('id_rol') : null,
+            'estado' => $request->query('estado', 'TODOS'),
+        ];
+        $usuarios = $this->usuarioService->listar($filtros['buscar'], $filtros['id_rol'], $filtros['estado']);
+        $todosLosRoles = Rol::where('activo', true)->orderBy('nombre')->get();
+        // Solo roles del personal se asignan aquí; los clientes se registran en el portal (SRS CU04).
+        $roles = $todosLosRoles->whereIn('nombre', UsuarioService::ROLES_PERSONAL)->values();
 
-        return view('usuarios.index', compact('usuarios', 'roles'));
+        return view('usuarios.index', compact('usuarios', 'roles', 'todosLosRoles', 'filtros'));
+    }
+
+    /**
+     * CU04 flujo 2a – Editar usuario (GERENTE).
+     */
+    public function update(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'tipo_documento' => 'required|string|in:DNI,PASAPORTE,CARNET_EXTRANJERIA',
+            'numero_documento' => 'required|string|max:30',
+            'nombres' => 'required|string|max:100',
+            'apellidos' => 'required|string|max:120',
+            'telefono' => 'nullable|string|max:30',
+            'correo' => 'nullable|email|max:120',
+            'id_rol' => 'required|integer',
+            'nombre_usuario' => 'required|string|max:50',
+        ]);
+
+        try {
+            $usuario = $this->usuarioService->actualizar($id, $validated, Auth::id());
+
+            return redirect()->route('usuarios.index')->with('success', "Usuario {$usuario->nombre_usuario} actualizado.");
+        } catch (InvalidArgumentException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
     }
 
     public function store(Request $request)
@@ -40,9 +76,9 @@ class UsuarioController extends Controller
             'apellidos' => 'required|string|max:120',
             'telefono' => 'nullable|string|max:30',
             'correo' => 'nullable|email|max:120',
-            'id_rol' => 'required|integer|exists:rol,id_rol',
+            'id_rol' => ['required', 'integer', \Illuminate\Validation\Rule::exists('rol', 'id_rol')->whereIn('nombre', UsuarioService::ROLES_PERSONAL)],
             'nombre_usuario' => 'required|string|max:50|unique:usuario,nombre_usuario',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:' . UsuarioService::MIN_PASSWORD,
         ]);
 
         try {
@@ -94,6 +130,31 @@ class UsuarioController extends Controller
                 ->with('success', "Usuario '{$validated['nombre_usuario']}' creado exitosamente.");
         } catch (Exception $e) {
             return back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * CU05 – Cambiar contraseña de usuario (GERENTE).
+     */
+    public function cambiarContrasena($id, Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string',
+            'password_confirmation' => 'required|string',
+        ]);
+
+        try {
+            $usuario = $this->usuarioService->cambiarContrasena(
+                (int) $id,
+                (string) $request->input('password'),
+                (string) $request->input('password_confirmation'),
+                Auth::id()
+            );
+
+            return redirect()->route('usuarios.index')
+                ->with('success', "Contraseña de {$usuario->nombre_usuario} actualizada. La anterior ya no es válida.");
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
         }
     }
 

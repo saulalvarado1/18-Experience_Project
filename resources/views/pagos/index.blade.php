@@ -1,11 +1,12 @@
 @extends('layouts.app')
 
 @section('title', 'Pagos y Finanzas — 18 Grados Sur')
+@section('page_title', 'Pagos')
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-cash-coin text-success me-2"></i>Gestión de Pagos y Validación (CU18–CU19)</h2>
+        <h2 class="fw-bold text-dark mb-1">Pagos y validación</h2>
         <p class="text-muted mb-0">Recepción de pagos, verificación de comprobantes y validación contable para reservas.</p>
     </div>
     <div>
@@ -74,13 +75,20 @@
                     </td>
                     <td class="fw-semibold">{{ $p->moneda }} {{ number_format($p->monto_base, 2) }}</td>
                     <td class="text-danger">{{ $p->recargo > 0 ? '+ S/ ' . number_format($p->recargo, 2) : '-' }}</td>
-                    <td class="fw-bold text-success">{{ $p->moneda }} {{ number_format($p->monto_total_pagado, 2) }}</td>
+                    <td class="fw-bold text-success">
+                        {{ $p->moneda }} {{ number_format($p->monto_total_pagado, 2) }}
+                        @if($p->monto_devuelto > 0)
+                        <div class="small text-danger fw-normal">Devuelto: S/ {{ number_format($p->monto_devuelto, 2) }}</div>
+                        @endif
+                    </td>
                     <td>
                         @if($p->estado === 'VALIDADO')
                             <span class="badge bg-success"><i class="bi bi-check2-circle me-1"></i>VALIDADO</span>
                             <div class="small text-muted" style="font-size: 10px;">Por: {{ $p->usuarioValidacion->nombre_usuario ?? 'Sistema' }}</div>
                         @elseif($p->estado === 'PENDIENTE_VALIDACION')
                             <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>POR VALIDAR</span>
+                        @elseif($p->estado === 'DEVUELTO')
+                            <span class="badge bg-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>DEVUELTO</span>
                         @else
                             <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>RECHAZADO</span>
                             @if($p->observacion)
@@ -102,7 +110,7 @@
                         <div class="btn-group">
                             <form action="{{ route('pagos.validar', $p->id_pago) }}" method="POST" class="d-inline">
                                 @csrf
-                                <button type="submit" class="btn btn-sm btn-success" title="Aprobar y Validar Pago" onclick="return confirm('¿Aprobar y validar este pago?')">
+                                <button type="submit" class="btn btn-sm btn-success" title="Aprobar y Validar Pago" data-confirm="El monto contará para el saldo y el anticipo de la cotización." data-confirm-title="¿Validar este pago?" data-confirm-ok="Sí, validar" data-confirm-variant="success">
                                     <i class="bi bi-check-lg"></i>
                                 </button>
                             </form>
@@ -110,6 +118,19 @@
                                 <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
+                        @endif
+                        @if($p->estado === 'VALIDADO'
+                            && ($p->metodoPago->nombre ?? '') === config('services.pasarela.metodo_pago')
+                            && $p->montoDevolvible() > 0
+                            && in_array(Auth::user()->rol->nombre ?? '', ['GERENTE', 'CONTABILIDAD']))
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-devolver-pago"
+                            data-id="{{ $p->id_pago }}"
+                            data-operacion="{{ $p->numero_operacion }}"
+                            data-devolvible="{{ number_format($p->montoDevolvible(), 2, '.', '') }}"
+                            data-mismo-dia="{{ $p->fecha_pago && $p->fecha_pago->isToday() ? '1' : '0' }}"
+                            title="Devolver al cliente por la pasarela">
+                            <i class="bi bi-arrow-counterclockwise"></i> Devolver
+                        </button>
                         @endif
                     </td>
                 </tr>
@@ -138,7 +159,7 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-cash-stack me-2 text-success"></i>Registrar Pago (CU18)</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-cash-stack me-2 text-success"></i>Registrar Pago</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -159,7 +180,7 @@
                         <select name="id_metodo_pago" id="selectMetodoPago" class="form-select" required>
                             <option value="">-- Seleccione Método --</option>
                             @foreach($metodos as $m)
-                            <option value="{{ $m->id_metodo_pago }}" data-recargo="{{ $m->aplica_recargo ? $m->porcentaje_recargo : 0 }}">
+                            <option value="{{ $m->id_metodo_pago }}" data-recargo="{{ $m->aplica_recargo ? $m->porcentaje_recargo : 0 }}" data-requiere="{{ $m->requiere_validacion ? 1 : 0 }}">
                                 {{ $m->nombre }} {{ $m->aplica_recargo ? '(Recargo: ' . $m->porcentaje_recargo . '%)' : '' }}
                             </option>
                             @endforeach
@@ -178,13 +199,14 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">N.º Operación / Referencia</label>
-                        <input type="text" name="numero_operacion" class="form-control" placeholder="Ej: OP-987654321">
+                        <label class="form-label fw-semibold">N.º Operación / Referencia <span class="text-danger d-none marca-requiere">*</span></label>
+                        <input type="text" name="numero_operacion" id="inputNumeroOperacion" class="form-control" placeholder="Ej: OP-987654321" maxlength="100">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Comprobante / Voucher (Máx. 5MB)</label>
-                        <input type="file" name="comprobante" class="form-control" accept="image/*,.pdf">
+                        <label class="form-label fw-semibold">Comprobante / Voucher (Máx. 5MB) <span class="text-danger d-none marca-requiere">*</span></label>
+                        <input type="file" name="comprobante" id="inputComprobante" class="form-control" accept="image/jpeg,image/png,.pdf">
+                        <div class="form-text d-none marca-requiere">Este método requiere validación de Contabilidad: adjunta el comprobante.</div>
                     </div>
 
                     <div class="mb-3">
@@ -224,8 +246,62 @@
     </div>
 </div>
 
+<!-- Modal Devolver Pago Online -->
+<div class="modal fade" id="modalDevolver" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" id="formDevolver" action="">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i>Devolver Pago Online</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2 small">Operación: <strong id="devolverOperacion"></strong></p>
+                    <div id="devolverAvisoComision" class="alert alert-warning py-2 small">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Este pago no es del día de hoy: la pasarela <strong>descontará su comisión</strong> de la devolución a la agencia.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Monto a devolver (S/) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" min="0.01" name="monto" id="devolverMonto" class="form-control" required>
+                        <div class="form-text">Máximo: S/ <span id="devolverMaximo"></span>. Puedes devolver una parte (p. ej. descontando penalidad).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Motivo <span class="text-danger">*</span></label>
+                        <textarea name="motivo" rows="2" class="form-control" required minlength="3" placeholder="Ej: Reserva cancelada por el cliente con 10 días de anticipación."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-secondary" data-confirm="El dinero se devolverá al cliente por la pasarela. Esta acción no se puede deshacer." data-confirm-title="¿Confirmar la devolución?" data-confirm-ok="Sí, devolver" data-confirm-variant="danger">Confirmar Devolución</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Modal Devolver (pagos online)
+    const modalDevolverEl = document.getElementById('modalDevolver');
+    if (modalDevolverEl) {
+        const modalDevolver = new bootstrap.Modal(modalDevolverEl);
+        const formDevolver = document.getElementById('formDevolver');
+        document.querySelectorAll('.btn-devolver-pago').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const max = this.getAttribute('data-devolvible');
+                formDevolver.action = `/pagos/${this.getAttribute('data-id')}/devolver`;
+                document.getElementById('devolverOperacion').textContent = this.getAttribute('data-operacion');
+                document.getElementById('devolverMaximo').textContent = max;
+                const inputMonto = document.getElementById('devolverMonto');
+                inputMonto.max = max;
+                inputMonto.value = max;
+                document.getElementById('devolverAvisoComision').classList.toggle('d-none', this.getAttribute('data-mismo-dia') === '1');
+                modalDevolver.show();
+            });
+        });
+    }
+
     const selectMetodo = document.getElementById('selectMetodoPago');
     const inputMonto = document.getElementById('inputMontoBase');
     const inputTotal = document.getElementById('inputMontoTotal');
@@ -242,6 +318,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (selectMetodo && inputMonto) {
         selectMetodo.addEventListener('change', actualizarTotal);
         inputMonto.addEventListener('input', actualizarTotal);
+
+        // RN11 / CU18: n.º de operación y comprobante obligatorios si el método requiere validación
+        const sincronizarRequeridos = () => {
+            const opt = selectMetodo.options[selectMetodo.selectedIndex];
+            const requiere = opt && opt.dataset.requiere === '1';
+            document.getElementById('inputNumeroOperacion').required = requiere;
+            document.getElementById('inputComprobante').required = requiere;
+            document.querySelectorAll('.marca-requiere').forEach(el => el.classList.toggle('d-none', !requiere));
+        };
+        selectMetodo.addEventListener('change', sincronizarRequeridos);
+        sincronizarRequeridos();
     }
 
     // Modal Rechazar
