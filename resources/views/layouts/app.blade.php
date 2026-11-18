@@ -185,6 +185,26 @@
             }
             h2 { font-size: 1.4rem; }
         }
+
+        /* ===== Paginación limpia y control de tamaño SVG ===== */
+        nav svg, .pagination svg {
+            max-height: 1rem !important;
+            max-width: 1rem !important;
+            width: 1rem !important;
+            height: 1rem !important;
+            vertical-align: middle;
+        }
+        .pagination {
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .pagination .page-item .page-link {
+            border-radius: 0.375rem !important;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.85rem;
+        }
     </style>
     @yield('styles')
 </head>

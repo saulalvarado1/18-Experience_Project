@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Modules\Finanzas\Gateways\CulqiPaymentGateway;
 use App\Modules\Finanzas\Gateways\DemoPaymentGateway;
 use App\Modules\Finanzas\Gateways\PaymentGatewayInterface;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -37,6 +38,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Paginator::useBootstrapFive();
     }
 }
