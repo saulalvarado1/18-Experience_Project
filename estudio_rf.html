@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulador Interactivo de Sustentación (Línea por Línea) | 18 Experience</title>
+  <title>Simulador Interactivo de Sustentación (Línea por Línea Completo) | 18 Experience</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -14,7 +14,6 @@
     .code-font {
       font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
     }
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0b1120; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
@@ -23,14 +22,14 @@
 <body class="p-3 sm:p-6 min-h-screen">
 
   <!-- HEADER -->
-  <header class="max-w-5xl mx-auto mb-6 bg-slate-850 bg-slate-900 border border-slate-700/80 rounded-2xl p-4 sm:p-6 shadow-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+  <header class="max-w-5xl mx-auto mb-6 bg-slate-900 border border-slate-700/80 rounded-2xl p-4 sm:p-6 shadow-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
     <div>
       <div class="flex items-center gap-2">
         <span class="bg-teal-500/20 text-teal-300 font-bold px-2.5 py-0.5 rounded-full text-[11px] uppercase tracking-wider border border-teal-500/30">18 Experience Web</span>
-        <span class="bg-amber-500/20 text-amber-300 font-semibold px-2 py-0.5 rounded-full text-[11px]">Preparación de Sustentación</span>
+        <span class="bg-amber-500/20 text-amber-300 font-semibold px-2 py-0.5 rounded-full text-[11px]">Sustentación Paso a Paso</span>
       </div>
-      <h1 class="text-xl sm:text-2xl font-black text-white mt-1">Simulador Interactivo Línea por Línea</h1>
-      <p class="text-slate-400 text-xs sm:text-sm mt-0.5">Una línea de código real + su explicación en cristiano + cómo decírselo al jurado.</p>
+      <h1 class="text-xl sm:text-2xl font-black text-white mt-1">Simulador Línea por Línea (Todas las Líneas)</h1>
+      <p class="text-slate-400 text-xs sm:text-sm mt-0.5">Archivo de origen + Línea exacta + Explicación en cristiano + Frase para el jurado.</p>
     </div>
 
     <!-- Navegación entre Vistas -->
@@ -61,19 +60,19 @@
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t border-slate-800">
         <div class="flex flex-wrap gap-1.5" id="file-tabs-container"></div>
         <div class="w-full sm:w-64">
-          <input type="text" id="search-input" oninput="handleSearch()" placeholder="🔍 Buscar palabra (ej. Bcrypt, DNI...)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500" />
+          <input type="text" id="search-input" oninput="handleSearch()" placeholder="🔍 Buscar (ej. Bcrypt, DNI, Rollback...)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500" />
         </div>
       </div>
     </div>
 
-    <!-- VISTA 1: MODO INTERCALADO (EL FORMATO QUE PIDIÓ EL USUARIO: CÓDIGO + TEXTO EN CRISTIANO DEBAJO) -->
+    <!-- VISTA 1: MODO INTERCALADO (TODAS LAS LÍNEAS CON RUTA DE ARCHIVO Y NÚMERO) -->
     <div id="view-intercalado" class="space-y-4">
       <div class="flex justify-between items-center px-1">
         <div class="text-xs text-slate-400">
-          Mostrando requerimiento: <span id="current-rf-badge" class="font-bold text-teal-400">RF01</span> • <span id="lines-count-text">0 líneas</span>
+          Requerimiento: <span id="current-rf-badge" class="font-bold text-teal-400">RF01</span> • <span id="current-file-badge" class="font-mono text-slate-300">archivo.php</span> • <span id="lines-count-text" class="text-amber-400 font-bold">0 líneas</span>
         </div>
         <div class="text-[11px] text-slate-500">
-          💡 Estudia bajando línea por línea
+          💡 Todas las líneas del método incluidas
         </div>
       </div>
 
@@ -82,20 +81,23 @@
       </div>
     </div>
 
-    <!-- VISTA 2: MODO TARJETAS / PASO A PASO PARA CELULAR (UNA LÍNEA A LA VEZ) -->
+    <!-- VISTA 2: MODO TARJETAS / PASO A PASO PARA CELULAR -->
     <div id="view-tarjetas" class="hidden space-y-4">
       <div class="bg-slate-900 border-2 border-teal-500/80 rounded-2xl p-4 sm:p-6 shadow-2xl">
-        <!-- Barra de progreso -->
         <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden mb-4 border border-slate-800">
           <div id="card-progress" class="bg-teal-400 h-full transition-all duration-150" style="width: 10%;"></div>
         </div>
 
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-800 mb-3">
           <div class="flex items-center gap-2">
             <span id="card-line-num" class="bg-teal-500 text-slate-950 font-black text-xs px-2.5 py-1 rounded-lg">Línea --</span>
             <span id="card-file-name" class="text-xs font-mono font-bold text-slate-300">Archivo</span>
           </div>
           <span id="card-counter" class="text-xs text-slate-400 font-mono">1 de 10</span>
+        </div>
+
+        <div class="text-[11px] font-mono text-slate-400 mb-2 truncate" id="card-file-path">
+          Ruta: app/Modules/...
         </div>
 
         <!-- Código resaltado grande -->
@@ -111,7 +113,7 @@
           </div>
 
           <div class="bg-emerald-950/30 p-3.5 rounded-xl border border-emerald-800/50">
-            <div class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1">🎤 Dilo así en tu sustentación</div>
+            <div class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1">🎤 Dilo así en tu sustentación frente al jurado</div>
             <div id="card-jury" class="text-xs sm:text-sm text-emerald-200 italic leading-relaxed"></div>
           </div>
         </div>
@@ -133,7 +135,7 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex justify-between items-center">
         <div>
           <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">🎓 Banco de Preguntas Típicas de Examen</h2>
-          <p class="text-slate-400 text-xs mt-0.5">Respuestas preparadas para las preguntas que te hará el docente evaluador.</p>
+          <p class="text-slate-400 text-xs mt-0.5">Respuestas modelo para las preguntas que te hará el jurado evaluador.</p>
         </div>
         <span id="qa-rf-title" class="text-xs bg-slate-800 text-teal-300 px-3 py-1 rounded-xl border border-slate-700 font-bold">RF01</span>
       </div>
@@ -150,602 +152,2112 @@
   </footer>
 
   <script>
-    // ==========================================
-    // BASE DE DATOS LÍNEA POR LÍNEA (RF01 AL RF05)
-    // ==========================================
     const DATA = {
-      rf01: {
-        id: "rf01",
-        code: "RF01",
-        name: "RF01: Control de Acceso y Autenticación",
-        badge: "Login y Seguridad",
-        files: [
+  "rf01": {
+    "id": "rf01",
+    "code": "RF01",
+    "name": "RF01: Control de Acceso y Autenticación",
+    "badge": "Login y Seguridad",
+    "files": [
+      {
+        "name": "AuthController.php",
+        "path": "app/Modules/Seguridad/Controllers/AuthController.php",
+        "label": "Controlador (login)",
+        "lines": [
           {
-            name: "AuthController.php",
-            label: "Controlador (login)",
-            lines: [
-              {
-                num: 37,
-                code: "public function login(Request $request)",
-                plain: "Es la puerta de entrada. Cuando el usuario hace clic en 'Iniciar Sesión' en la web, esta función arranca. La variable $request es la cajita que trae todo lo que escribió en la pantalla (su usuario, su clave y el captcha).",
-                jury: "Es el método del controlador que recibe la petición HTTP con las credenciales del formulario para su procesamiento."
-              },
-              {
-                num: 38,
-                code: "{",
-                plain: "Abre la función. Todo lo que esté adentro se ejecutará en orden estricto de arriba hacia abajo.",
-                jury: "Abre el bloque de instrucciones del método login."
-              },
-              {
-                num: 39,
-                code: "    $request->validate([",
-                plain: "Le pone un freno a la computadora y le dice: 'Espera, no consultes la base de datos todavía. Primero revisa que los datos que enviaron no vengan vacíos'.",
-                jury: "Aplica la capa de validación de entrada antes de interactuar con el modelo de datos."
-              },
-              {
-                num: 40,
-                code: "        'usuario' => 'required|string',",
-                plain: "Obliga a que la casilla de 'Usuario' no esté vacía (required) y que contenga letras o números (string). Si la envían vacía, el sistema la frena.",
-                jury: "Garantiza que el campo nombre de usuario sea obligatorio y de tipo texto."
-              },
-              {
-                num: 41,
-                code: "        'password' => 'required|string',",
-                plain: "Obliga a que la casilla de 'Contraseña' también tenga texto y no esté vacía.",
-                jury: "Valida la obligatoriedad del password para evitar llamadas innecesarias al servicio criptográfico."
-              },
-              {
-                num: 42,
-                code: "        'captcha' => 'required|string',",
-                plain: "Obliga a que la persona haya escrito las letras de la imagen de seguridad CAPTCHA.",
-                jury: "Exige el código anti-bot para mitigar ataques automatizados de fuerza bruta."
-              },
-              {
-                num: 43,
-                code: "    ], [ 'usuario.required' => 'Ingrese su nombre de usuario.', ... ]);",
-                plain: "Son los mensajes en español amigable que saldrán en rojo en la pantalla si la persona dejó alguna casilla vacía.",
-                jury: "Mapea mensajes de error legibles y personalizados hacia la vista del usuario."
-              },
-              {
-                num: 50,
-                code: "    if (!$this->authService->validateCaptcha($request->input('captcha'))) {",
-                plain: "Pregunta: '¿Las letras del CAPTCHA que escribió el usuario NO coinciden con la imagen?' (el signo '!' significa 'NO coincide').",
-                jury: "Valida el CAPTCHA contra la sesión antes de hacer cualquier consulta a PostgreSQL, protegiendo la base de datos."
-              },
-              {
-                num: 51,
-                code: "        return back()",
-                plain: "Como el CAPTCHA estuvo mal, regresa a la persona a la misma pantalla del login de inmediato.",
-                jury: "Detiene el flujo alternativo y retorna la respuesta HTTP hacia el formulario."
-              },
-              {
-                num: 52,
-                code: "            ->withInput($request->only('usuario'))",
-                plain: "Mantiene escrito su nombre de usuario en la cajita para que no tenga que escribirlo de nuevo. OJO: ¡la contraseña nunca se devuelve por seguridad!",
-                jury: "Preserva el input no sensible del formulario según las directrices de seguridad OWASP."
-              },
-              {
-                num: 53,
-                code: "            ->withErrors(['captcha' => 'El código CAPTCHA es incorrecto.']);",
-                plain: "Muestra el mensaje de error en letras rojas avisándole que falló el código de la imagen.",
-                jury: "Inyecta el error de validación en la bolsa de errores de la sesión."
-              },
-              {
-                num: 57,
-                code: "    try {",
-                plain: "Significa 'Intenta hacer esto'. Es una red de seguridad: si ocurre algún error adentro, el sistema no se romperá ni saldrá una pantalla en blanco.",
-                jury: "Inicia el bloque de manejo de excepciones para atrapar errores de negocio y evitar fallos no controlados."
-              },
-              {
-                num: 58,
-                code: "        $this->authService->authenticate($request->input('usuario'), $request->input('password'));",
-                plain: "Le entrega el usuario y la clave a la capa de servicio (AuthService) para que vaya a PostgreSQL a revisar si existen y si la contraseña es la correcta.",
-                jury: "Delega la lógica transaccional y de dominio al servicio correspondiente, respetando la arquitectura de capas."
-              },
-              {
-                num: 63,
-                code: "        $request->session()->regenerate();",
-                plain: "Seguridad clave: Cambia el código único de la cookie de sesión del navegador por uno nuevo.",
-                jury: "Medida obligatoria contra ataques de Session Fixation (Fijación de Sesión), emitiendo una nueva ID de sesión autenticada."
-              },
-              {
-                num: 65,
-                code: "        return redirect()->intended(route('dashboard'));",
-                plain: "Si todo fue correcto, redirige al usuario a la pantalla principal del Dashboard de la empresa.",
-                jury: "Redirige a la ruta prevista originalmente o al panel principal mediante intended()."
-              },
-              {
-                num: 66,
-                code: "    } catch (\\Exception $e) {",
-                plain: "Si la contraseña fue incorrecta o la cuenta estaba inactiva, aquí se atrapa el mensaje de error para mostrarlo en pantalla.",
-                jury: "Captura las excepciones lanzadas por AuthService para comunicar el mensaje al usuario de manera amigable."
-              },
-              {
-                num: 67,
-                code: "        return back()->withInput($request->only('usuario'))->withErrors(['usuario' => $e->getMessage()]);",
-                plain: "Regresa a la pantalla del login y muestra en rojo el mensaje exacto ('Usuario o contraseña incorrectos').",
-                jury: "Retorna a la vista con el mensaje de excepción sin exponer trazas técnicas del sistema."
-              }
-            ]
+            "num": 37,
+            "code": "public function login(Request $request)",
+            "plain": "Punto de entrada: Cuando la persona hace clic en 'Iniciar Sesión' en el navegador, se activa este método. $request contiene los datos enviados (usuario, clave y captcha).",
+            "jury": "Método del controlador que maneja la solicitud HTTP POST de inicio de sesión.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
           },
           {
-            name: "AuthService.php",
-            label: "Servicio (authenticate)",
-            lines: [
-              {
-                num: 56,
-                code: "public function authenticate(string $username, string $password): Usuario",
-                plain: "Es la función que hace el trabajo pesado en la base de datos. Recibe el usuario ($username) y la clave escrita ($password).",
-                jury: "Método de servicio tipado que encapsula las reglas de negocio del caso de uso CU01."
-              },
-              {
-                num: 58,
-                code: "    $usuario = Usuario::with(['persona', 'rol'])",
-                plain: "Va a la tabla usuario y le pide traer también a la persona humana y a su rol en una sola consulta.",
-                jury: "Aplicamos Eager Loading con with() para resolver el problema de consultas N+1 y optimizar el rendimiento en PostgreSQL."
-              },
-              {
-                num: 59,
-                code: "        ->where('nombre_usuario', trim($username))",
-                plain: "Busca la fila donde el nombre de usuario coincida. trim() borra si la persona metió un espacio en blanco por error.",
-                jury: "Filtra la entidad asegurando la sanitización de espacios en blanco mediante trim()."
-              },
-              {
-                num: 60,
-                code: "        ->first();",
-                plain: "Trae el primer resultado encontrado. Si no existe nadie con ese nombre, devuelve vacío (null).",
-                jury: "Ejecuta la consulta SQL con LIMIT 1 retornando la instancia del modelo o null."
-              },
-              {
-                num: 62,
-                code: "    if (!$usuario) {",
-                plain: "Pregunta: '¿La base de datos no encontró a nadie con ese nombre de usuario?'.",
-                jury: "Verifica si el usuario existe en la base de datos."
-              },
-              {
-                num: 63,
-                code: "        throw new \\Exception('Usuario o contraseña incorrectos.');",
-                plain: "Si no existe, frena todo y lanza ese mensaje. Por seguridad no dice 'El usuario no existe', para que nadie sepa qué nombres de usuario existen.",
-                jury: "Previene la enumeración de nombres de usuario respondiendo con un mensaje genérico según OWASP."
-              },
-              {
-                num: 66,
-                code: "    if (!$usuario->activo) {",
-                plain: "Pregunta si la cuenta del usuario fue dada de baja (activo = false).",
-                jury: "Control de acceso por estado de vigencia del usuario."
-              },
-              {
-                num: 67,
-                code: "        throw new \\Exception('Su cuenta de usuario se encuentra inactiva.');",
-                plain: "Si su cuenta está inactiva, bloquea el paso y muestra ese mensaje.",
-                jury: "Rechaza el acceso si la cuenta fue deshabilitada administrativamente."
-              },
-              {
-                num: 70,
-                code: "    if (!$usuario->persona || !$usuario->persona->activo) {",
-                plain: "Revisa si el trabajador humano asociado a la cuenta fue cesado o despedido de la empresa.",
-                jury: "Validación de integridad humana: si el personal fue cesado, su cuenta queda inhabilitada de inmediato."
-              },
-              {
-                num: 71,
-                code: "        throw new \\Exception('El registro de personal asociado está inactivo.');",
-                plain: "Muestra el error de trabajador inactivo.",
-                jury: "Impide el acceso a personal que ya no labora en la agencia."
-              },
-              {
-                num: 74,
-                code: "    if (!$usuario->rol || !$usuario->rol->activo) {",
-                plain: "Revisa que el rol (Gerente, Counter, etc.) siga habilitado en el sistema.",
-                jury: "Control de acceso RBAC: verifica que el rol asignado mantenga vigencia operativa."
-              },
-              {
-                num: 78,
-                code: "    if (!$this->passwordService->verify($password, $usuario->password_hash)) {",
-                plain: "Compara la clave que escribió la persona contra el código seguro encriptado guardado en la base de datos (password_hash).",
-                jury: "Las contraseñas nunca se guardan en texto claro; se verifican matemáticamente contra el hash Bcrypt salado."
-              },
-              {
-                num: 79,
-                code: "        throw new \\Exception('Usuario o contraseña incorrectos.');",
-                plain: "Si la contraseña no coincide, bloquea el paso.",
-                jury: "Lanza excepción de autenticación fallida."
-              },
-              {
-                num: 83,
-                code: "    $usuario->ultimo_acceso = now();",
-                plain: "Toma la fecha y hora exacta de este segundo (now()) y se la asigna al usuario.",
-                jury: "Actualiza el campo de trazabilidad de último acceso requerido por el caso de uso CU01."
-              },
-              {
-                num: 84,
-                code: "    $usuario->save();",
-                plain: "Guarda esa fecha de entrada en la base de datos PostgreSQL (actualiza la columna ultimo_acceso).",
-                jury: "Persiste el cambio de fecha y hora en la tabla usuario."
-              },
-              {
-                num: 86,
-                code: "    Auth::login($usuario);",
-                plain: "Le avisa formalmente a Laravel: 'Esta persona ya demostró quién es, déjala pasar y mantén su sesión abierta'.",
-                jury: "Autentica formalmente la sesión en el framework de seguridad de Laravel."
-              },
-              {
-                num: 88,
-                code: "    return $usuario;",
-                plain: "Devuelve la información del usuario autenticado para que pueda entrar al sistema.",
-                jury: "Retorna la entidad autenticada hacia el controlador."
-              }
-            ]
-          }
-        ],
-        questions: [
-          { q: "¿Cómo se guardan las contraseñas en la base de datos?", a: "Se almacenan cifradas con el algoritmo Bcrypt mediante Hash::make(). Nunca en texto plano, garantizando que nadie pueda leerlas ni siquiera los administradores de la base de datos." },
-          { q: "¿Por qué se regenera la sesión con $request->session()->regenerate()?", a: "Para prevenir ataques de Fijación de Sesión (Session Fixation), asegurando que el identificador de sesión anterior quede invalidado y el usuario use una cookie fresca." },
-          { q: "¿Qué valida el sistema antes de permitir el ingreso además de la contraseña?", a: "Valida 3 estados: 1) Que la cuenta de usuario esté activa, 2) Que la persona física trabajadora esté activa, y 3) Que el rol asignado esté habilitado." }
-        ]
-      },
-
-      rf02: {
-        id: "rf02",
-        code: "RF02",
-        name: "RF02: Crear Trabajadores y Cuentas de Personal",
-        badge: "Usuarios y Roles",
-        files: [
-          {
-            name: "UsuarioController.php",
-            label: "Controlador (store)",
-            lines: [
-              {
-                num: 70,
-                code: "public function store(Request $request)",
-                plain: "Función que se activa cuando Gerencia llena el formulario para dar de alta a un nuevo trabajador y presiona 'Guardar'.",
-                jury: "Método del controlador que orquesta el registro de nuevos usuarios de personal (CU04)."
-              },
-              {
-                num: 72,
-                code: "    $validated = $request->validate([",
-                plain: "Empieza a revisar que los datos del trabajador cumplan con las reglas de la empresa antes de tocar la base de datos.",
-                jury: "Ejecuta las reglas de validación de entrada."
-              },
-              {
-                num: 73,
-                code: "        'tipo_documento' => 'required|string|in:DNI,PASAPORTE,CARNET_EXTRANJERIA',",
-                plain: "Obliga a que el documento sea estrictamente DNI, PASAPORTE o CARNET_EXTRANJERIA. No acepta otro valor.",
-                jury: "Restringe los tipos de documento a los autorizados en el sistema."
-              },
-              {
-                num: 74,
-                code: "        'numero_documento' => 'required|string|max:30', 'nombres' => 'required|string|max:100', ...",
-                plain: "Exige número de documento, nombres y apellidos obligatorios. Teléfono y correo son opcionales (nullable).",
-                jury: "Valida longitudes y obligatoriedad de los datos personales."
-              },
-              {
-                num: 79,
-                code: "        'id_rol' => ['required', 'integer', Rule::exists('rol', 'id_rol')->whereIn('nombre', UsuarioService::ROLES_PERSONAL)],",
-                plain: "Revisa que el rol exista en la base de datos y que sea únicamente personal administrativo (GERENTE, COUNTER o CONTABILIDAD). No permite crear clientes por esta pantalla.",
-                jury: "Garantiza que solo se puedan asignar roles del personal operativo autorizados por Gerencia."
-              },
-              {
-                num: 80,
-                code: "        'nombre_usuario' => 'required|string|max:50|unique:usuario,nombre_usuario',",
-                plain: "Exige que el nombre de usuario sea único en toda la empresa (unique). Si ya existe alguien con ese usuario, no te deja crearlo.",
-                jury: "Aplica la regla de negocio RN01: unicidad de nombre de usuario en la base de datos."
-              },
-              {
-                num: 81,
-                code: "        'password' => 'required|string|min:' . UsuarioService::MIN_PASSWORD,",
-                plain: "Obliga a que la contraseña tenga mínimo 8 caracteres de largo por seguridad.",
-                jury: "Cumple la política de longitud mínima de 8 caracteres exigida por la empresa."
-              },
-              {
-                num: 85,
-                code: "        DB::transaction(function () use ($validated) {",
-                plain: "Super importante: Abre una transacción en la base de datos. Significa: 'Vamos a guardar datos en 3 tablas (persona, usuario y auditoría). Si cualquiera de los 3 pasos falla, cancela todo y borra lo que se haya creado para no dejar basura a medias'.",
-                jury: "Usamos DB::transaction() para garantizar atomicidad e integridad referencial en PostgreSQL: o se guarda todo o se hace Rollback automático."
-              },
-              {
-                num: 87,
-                code: "            $this->validadorPersona->validar([...]);",
-                plain: "Llama a un validador que comprueba que si eligió DNI tenga exactamente 8 números oficiales.",
-                jury: "Ejecuta el servicio de validación de identidad para documentos peruanos."
-              },
-              {
-                num: 96,
-                code: "            $persona = Persona::firstOrCreate(['tipo_documento' => ..., 'numero_documento' => ...], [...]);",
-                plain: "Busca si el DNI ya existía en el sistema. Si ya existía, reutiliza su ID; si no existía, inserta a la persona física en la tabla persona.",
-                jury: "Aplicamos el patrón firstOrCreate() para normalizar la entidad persona y evitar duplicidad de personas físicas."
-              },
-              {
-                num: 111,
-                code: "            $usuario = Usuario::create([",
-                plain: "Inserta una nueva fila en la tabla usuario enlazándola con el ID de la persona (id_persona), su rol, y encriptando su clave con Hash::make() para que nadie pueda verla.",
-                jury: "Crea el registro de credenciales con la contraseña debidamente hasheada con Bcrypt."
-              },
-              {
-                num: 120,
-                code: "            Auditoria::registrar(Auth::id(), 'CREAR_USUARIO', 'usuario', $usuario->id_usuario, ...);",
-                plain: "Guarda en la bitácora de auditoría quién creó este usuario, la fecha y hora, y qué rol se le dio.",
-                jury: "Cumple con la regla de negocio RN16 de auditoría corporativa obligatoria."
-              },
-              {
-                num: 129,
-                code: "            return redirect()->route('usuarios.index')->with('success', 'Usuario creado exitosamente.');",
-                plain: "Redirige al listado de usuarios mostrando un mensaje verde de éxito.",
-                jury: "Retorna a la vista principal con mensaje flash de confirmación."
-              }
-            ]
-          }
-        ],
-        questions: [
-          { q: "¿Por qué se utiliza DB::transaction() al registrar un usuario?", a: "Porque se guardan datos en 3 tablas (persona, usuario y auditoría). Si una falla, la transacción hace ROLLBACK completo, evitando que queden personas huérfanas sin usuario o usuarios sin auditoría." },
-          { q: "¿Qué hace Persona::firstOrCreate()?", a: "Busca si ya existe una persona con ese tipo y número de documento. Si ya existe la reutiliza, y si no existe la crea en ese instante, impidiendo que una persona física se duplique." },
-          { q: "¿Qué rol tiene permiso para cambiar la contraseña de otro usuario?", a: "Solo el rol GERENTE (CU05), y al hacerlo se registra en la auditoría del sistema quién hizo el cambio pero nunca se registra la contraseña en texto plano." }
-        ]
-      },
-
-      rf03: {
-        id: "rf03",
-        code: "RF03",
-        name: "RF03: Panel de Control y Resumen Operativo",
-        badge: "Dashboard y KPIs",
-        files: [
-          {
-            name: "DashboardController.php",
-            label: "Controlador (index)",
-            lines: [
-              {
-                num: 10,
-                code: "public function index()",
-                plain: "Función que calcula todos los números y estadísticas que se ven en la pantalla principal al entrar al sistema.",
-                jury: "Método principal que carga los indicadores clave de rendimiento (KPIs) del día para Gerencia y Counter (CU02)."
-              },
-              {
-                num: 12,
-                code: "    if (auth()->check() && auth()->user()->tieneRol('CLIENTE')) { return redirect()->route('portal.dashboard'); }",
-                plain: "Pregunta: '¿El que acaba de entrar es un cliente?'. Si es cliente, lo manda a su portal personal para que no pueda ver las finanzas ni las salidas de la agencia.",
-                jury: "Control de acceso RBAC: segregamos la vista gerencial del portal del cliente."
-              },
-              {
-                num: 17,
-                code: "    $hoy = now()->toDateString();",
-                plain: "Averigua la fecha de hoy en formato año-mes-día (ejemplo: 2026-11-25).",
-                jury: "Fija la fecha base para los filtros de la jornada actual."
-              },
-              {
-                num: 19,
-                code: "    $reservasHoy = DB::table('reserva')->whereDate('fecha_reserva', $hoy)->where('estado', '<>', 'CANCELADA')->count();",
-                plain: "Cuenta cuántas reservas válidas (que no estén canceladas) se han hecho hoy en la agencia.",
-                jury: "Calcula el total de reservas operativas del día excluyendo canceladas."
-              },
-              {
-                num: 24,
-                code: "    $salidasHoy = DB::table('salida')->whereDate('fecha', $hoy)->where('estado', '<>', 'CANCELADA')->count();",
-                plain: "Cuenta cuántos tours o buses salen hoy de viaje.",
-                jury: "Determina la carga logística de salidas programadas para el día."
-              },
-              {
-                num: 29,
-                code: "    $pagosPendientes = DB::table('pago')->where('estado', 'PENDIENTE_VALIDACION')->count();",
-                plain: "Cuenta cuántos comprobantes de pago subieron los clientes y están esperando que Contabilidad los revise y apruebe.",
-                jury: "Sirve como semáforo operativo de pagos pendientes para el área contable."
-              },
-              {
-                num: 33,
-                code: "    $totalRecaudado = (float) DB::table('pago')->where('estado', 'VALIDADO')->sum(DB::raw('monto_base - monto_base_devuelto'));",
-                plain: "Calcula el dinero real neto en caja: suma los pagos aprobados y resta el dinero que se haya devuelto a clientes por cancelaciones.",
-                jury: "Calcula la recaudación neta real descontando devoluciones mediante sum(monto_base - monto_base_devuelto)."
-              },
-              {
-                num: 38,
-                code: "    $proximasSalidas = DB::table('vw_disponibilidad_salida')->whereDate('fecha', '>=', $hoy)->limit(5)->get();",
-                plain: "Va a la vista de base de datos vw_disponibilidad_salida y trae las 5 salidas turísticas más cercanas desde hoy en adelante.",
-                jury: "Usamos una vista SQL en PostgreSQL para traer cupos totales, ocupados y disponibles ya calculados por el motor sin sobrecargar PHP."
-              },
-              {
-                num: 47,
-                code: "    $ventasMes = DB::table('reserva')->selectRaw(\"TO_CHAR(fecha_reserva, 'YYYY-MM') as mes, SUM(total_contratado) as total\")...",
-                plain: "Suma las ventas de cada uno de los últimos 6 meses para pintar el gráfico de barras en la pantalla.",
-                jury: "Consulta analítica agrupada por mes para alimentar la librería gráfica Chart.js (RF14)."
-              }
-            ]
-          }
-        ],
-        questions: [
-          { q: "¿Por qué se utiliza la vista 'vw_disponibilidad_salida' en lugar de hacer consultas con joins directos en PHP?", a: "Porque la vista SQL ya tiene precalculada la disponibilidad de cupos en el motor PostgreSQL, mejorando drásticamente el rendimiento y evitando código repetitivo." },
-          { q: "¿Qué hace la fórmula 'monto_base - monto_base_devuelto'?", a: "Calcula la recaudación neta real de la agencia: suma los pagos validados pero descuenta cualquier dinero reembolsado al cliente por cancelaciones." }
-        ]
-      },
-
-      rf04: {
-        id: "rf04",
-        code: "RF04",
-        name: "RF04: Registro y Gestión de Clientes",
-        badge: "Clientes y RN02",
-        files: [
-          {
-            name: "ClienteService.php",
-            label: "Servicio (registrar)",
-            lines: [
-              {
-                num: 99,
-                code: "public function registrar(array $datosPersona, string $tipoCliente, int $idUsuario): Cliente",
-                plain: "Función que recibe la información del nuevo cliente (DNI, nombre, etc.), su tipo (DIRECTO o CORPORATIVO) y qué trabajador lo está atendiendo.",
-                jury: "Método de servicio que centraliza las reglas de registro de clientes (CU08)."
-              },
-              {
-                num: 102,
-                code: "    $this->validador->validar($datosPersona);",
-                plain: "Revisa que los nombres no tengan símbolos extraños y que el documento cumpla con los 8 dígitos oficiales de RENIEC.",
-                jury: "Aplica validaciones estrictas sobre los formatos documentales de identificación."
-              },
-              {
-                num: 108,
-                code: "    if (!in_array($tipoCliente, ['DIRECTO', 'CORPORATIVO'])) { $tipoCliente = 'DIRECTO'; }",
-                plain: "Limpia los textos a mayúsculas y si no seleccionaron tipo de cliente, le asigna DIRECTO por defecto.",
-                jury: "Normaliza la tipología de cliente según los estándares del SRS."
-              },
-              {
-                num: 112,
-                code: "    return DB::transaction(function () use (...) {",
-                plain: "Abre la transacción en la base de datos para asegurar que si falla el guardado, no se guarden datos corruptos.",
-                jury: "Asegura la atomicidad entre persona, cliente y auditoría."
-              },
-              {
-                num: 114,
-                code: "        $personaExistente = $this->buscarPersonaPorDocumento($tipoDoc, $numDoc);",
-                plain: "Busca en PostgreSQL si ya existe alguien con ese número de DNI.",
-                jury: "Verifica si la persona natural ya figura registrada previamente."
-              },
-              {
-                num: 115,
-                code: "        if ($personaExistente && Cliente::where('id_persona', $personaExistente->id_persona)->exists()) {",
-                plain: "Regla de negocio RN02: Pregunta: '¿Esta persona con ese DNI ya está registrada como cliente en la empresa?'.",
-                jury: "Implementa el control de unicidad de cliente según la regla RN02."
-              },
-              {
-                num: 116,
-                code: "            throw new \\InvalidArgumentException('La persona ya está registrada como cliente.');",
-                plain: "Si ya existe como cliente, detiene el proceso y lanza el error. Impide tener dos fichas del mismo cliente.",
-                jury: "Lanza excepción de negocio impidiendo duplicar el expediente del cliente."
-              },
-              {
-                num: 119,
-                code: "        $persona = $this->obtenerOCrearPersona($datosPersona);",
-                plain: "Si la persona ya estaba en el sistema (por ejemplo, porque antes viajó como acompañante de otro pasajero), reutiliza sus datos sin duplicarla. Si no existía, la crea.",
-                jury: "Promueve a la persona natural a cliente sin redundancia de datos."
-              },
-              {
-                num: 122,
-                code: "        $cliente = Cliente::create(['id_persona' => $persona->id_persona, 'fecha_registro' => now(), 'tipo_cliente' => $tipoCliente, 'activo' => true]);",
-                plain: "Inserta la fila en la tabla cliente con la fecha de hoy y estado activo.",
-                jury: "Persiste la entidad Cliente con estado activo y vinculación relacional."
-              },
-              {
-                num: 130,
-                code: "        Auditoria::registrar($idUsuario, 'CREAR_CLIENTE', 'cliente', $cliente->id_cliente, ...);",
-                plain: "Registra en la auditoría qué Counter dio de alta al cliente.",
-                jury: "Garantiza trazabilidad en el registro de clientes bajo la regla RN16."
-              },
-              {
-                num: 138,
-                code: "        return $cliente;",
-                plain: "Devuelve el cliente registrado.",
-                jury: "Retorna el modelo Cliente creado satisfactoriamente."
-              }
-            ]
-          }
-        ],
-        questions: [
-          { q: "¿Qué exige la Regla de Negocio RN02 sobre los clientes?", a: "Establece que una persona física no puede ser registrada más de una vez como cliente. Si el DNI ya existe vinculado a un cliente, el sistema rechaza el intento con una excepción clara." },
-          { q: "¿Qué pasa si una persona ya fue pasajera acompañante en un tour y ahora quiere registrarse como cliente?", a: "La función obtenerOCrearPersona() detecta que su registro de 'persona' ya existe y lo reutiliza, creándole únicamente su nuevo rol en la tabla 'cliente' sin duplicar su identidad." }
-        ]
-      },
-
-      rf05: {
-        id: "rf05",
-        code: "RF05",
-        name: "RF05: Catálogo de Destinos Turísticos",
-        badge: "Destinos y Soft-State",
-        files: [
-          {
-            name: "CatalogoService.php",
-            label: "Servicio (crear y toggle)",
-            lines: [
-              {
-                num: 37,
-                code: "public function crearDestino(array $datos, int $idUsuario): Destino",
-                plain: "Función que guarda un nuevo destino turístico en Tacna (como Miculla, Calientes, Tarata, etc.).",
-                jury: "Servicio de catálogo encargado del registro de destinos turísticos (CU10)."
-              },
-              {
-                num: 39,
-                code: "    $nombre = trim($datos['nombre'] ?? ''); if (empty($nombre)) { throw new Exception('El nombre es obligatorio.'); }",
-                plain: "Revisa que el nombre del destino no esté vacío.",
-                jury: "Valida la obligatoriedad del nombre del destino turístico."
-              },
-              {
-                num: 44,
-                code: "    if (Destino::where('nombre', $nombre)->exists()) { throw new Exception('Ya existe un destino con ese nombre.'); }",
-                plain: "Pregunta a PostgreSQL si ya existe otro destino con ese mismo nombre para no tener dos destinos repetidos.",
-                jury: "Garantiza la unicidad del catálogo impidiendo nombres duplicados."
-              },
-              {
-                num: 49,
-                code: "    $destino = Destino::create(['nombre' => $nombre, 'altitud_msnm' => ..., 'activo' => true]);",
-                plain: "Inserta el destino en la base de datos con su altitud sobre el nivel del mar, recomendaciones de viaje y estado activo = true.",
-                jury: "Persiste la ficha técnica del destino turístico en PostgreSQL."
-              },
-              {
-                num: 60,
-                code: "    Auditoria::registrar($idUsuario, 'CREAR_DESTINO', 'destino', $destino->id_destino, ...);",
-                plain: "Registra en la bitácora qué trabajador creó el destino.",
-                jury: "Aplica la regla de auditoría corporativa RN16."
-              },
-              {
-                num: 96,
-                code: "public function cambiarEstadoDestino(int $id, bool $activo, int $idUsuario): Destino",
-                plain: "Función que apaga o prende un destino. REGLA DE ORO: Si un destino ya no se ofrece, NUNCA se borra con DELETE de SQL.",
-                jury: "Aplicamos Borrado Lógico (Soft State): nunca usamos DELETE en SQL para no romper reservas ni contratos históricos de tours ya realizados."
-              },
-              {
-                num: 98,
-                code: "    $destino = Destino::findOrFail($id);",
-                plain: "Busca el destino por su ID en la base de datos. Si no existe, detiene con error 404.",
-                jury: "Recupera la entidad por clave primaria o lanza excepción Not Found."
-              },
-              {
-                num: 99,
-                code: "    $destino->activo = $activo; $destino->save();",
-                plain: "Solo cambia la columna activo a false. El destino ya no saldrá para vender nuevos pasajes, pero todo el historial de viajes pasados queda 100% a salvo en la base de datos.",
-                jury: "Modifica el flag lógico de vigencia preservando la integridad referencial histórica."
-              }
-            ]
+            "num": 38,
+            "code": "{",
+            "plain": "Abre el bloque de instrucciones del método login.",
+            "jury": "Apertura del cuerpo del método.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
           },
           {
-            name: "DestinoController.php",
-            label: "Controlador (toggleEstado)",
-            lines: [
-              {
-                num: 53,
-                code: "public function toggleEstado(int $id)",
-                plain: "Se activa cuando haces un clic en el botón de activar/desactivar en la pantalla web.",
-                jury: "Controlador HTTP que maneja la solicitud de alternancia de estado de un destino."
-              },
-              {
-                num: 56,
-                code: "    $destino = Destino::findOrFail($id);",
-                plain: "Obtiene el destino para ver en qué estado está en este momento.",
-                jury: "Verifica el estado actual del registro."
-              },
-              {
-                num: 57,
-                code: "    $nuevoEstado = !$destino->activo;",
-                plain: "Invierte el estado: si estaba prendido (true), pasa a apagado (false); si estaba apagado, pasa a prendido.",
-                jury: "Invierte el valor booleano actual mediante negación lógica."
-              },
-              {
-                num: 59,
-                code: "    $this->catalogoService->cambiarEstadoDestino($id, $nuevoEstado, Auth::id());",
-                plain: "Llama al servicio para guardar el nuevo estado en PostgreSQL y registrar la auditoría.",
-                jury: "Delega la persistencia y la auditoría al servicio de catálogo."
-              },
-              {
-                num: 61,
-                code: "    $msg = $nuevoEstado ? 'Destino activado.' : 'Destino desactivado.'; return redirect()->route('destinos.index')->with('success', $msg);",
-                plain: "Muestra el mensaje en verde y recarga la tabla de destinos.",
-                jury: "Redirige con mensaje flash adecuado al nuevo estado."
-              }
-            ]
+            "num": 39,
+            "code": "    $request->validate([",
+            "plain": "Ordena validar las casillas del formulario antes de consultar la base de datos.",
+            "jury": "Ejecuta el middleware de validación de entrada de Laravel.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 40,
+            "code": "        'usuario' => 'required|string',",
+            "plain": "Exige que el campo usuario sea obligatorio (required) y sea texto (string).",
+            "jury": "Regla de validación de presencia y tipo de dato string para el username.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 41,
+            "code": "        'password' => 'required|string',",
+            "plain": "Exige que el campo contraseña sea obligatorio y sea texto.",
+            "jury": "Regla de validación de presencia y tipo string para el password.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 42,
+            "code": "        'captcha' => 'required|string',",
+            "plain": "Exige que el usuario haya ingresado el texto del CAPTCHA de la imagen.",
+            "jury": "Regla de validación obligatoria para mitigar ataques automatizados.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 43,
+            "code": "    ], [",
+            "plain": "Separa las reglas de los mensajes de error personalizados en español.",
+            "jury": "Inicio del mapeo de mensajes de error customizados.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 44,
+            "code": "        'usuario.required' => 'Ingrese su nombre de usuario.',",
+            "plain": "Mensaje que se mostrará en pantalla si el usuario dejó vacía la casilla de usuario.",
+            "jury": "Mensaje de feedback descriptivo para el usuario.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 45,
+            "code": "        'password.required' => 'Ingrese su contraseña.',",
+            "plain": "Mensaje que se mostrará en pantalla si la contraseña está vacía.",
+            "jury": "Mensaje de feedback descriptivo para el usuario.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 46,
+            "code": "        'captcha.required' => 'Ingrese el código CAPTCHA.',",
+            "plain": "Mensaje que se mostrará en pantalla si el captcha está vacío.",
+            "jury": "Mensaje de feedback descriptivo para el usuario.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 47,
+            "code": "    ]);",
+            "plain": "Cierra y ejecuta la función de validación de campos.",
+            "jury": "Fin de la instrucción validate().",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 48,
+            "code": "",
+            "plain": "Línea en blanco que separa la validación del formulario de la validación del CAPTCHA.",
+            "jury": "Separación visual de bloques lógicos.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 49,
+            "code": "    // 1. Validar CAPTCHA (CU01)",
+            "plain": "Comentario del programador: indica que aquí se atiende el Caso de Uso 01 del SRS.",
+            "jury": "Comentario de trazabilidad hacia el SRS CU01.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 50,
+            "code": "    if (!$this->authService->validateCaptcha($request->input('captcha'))) {",
+            "plain": "Pregunta si las letras ingresadas por el usuario NO coinciden con las letras generadas en la sesión (el '!' significa NO).",
+            "jury": "Validación lógica de la clave del captcha contra la sesión antes de consultar la base de datos.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 51,
+            "code": "        return back()",
+            "plain": "Si el CAPTCHA falló, detiene el proceso y devuelve al usuario a la misma pantalla del formulario.",
+            "jury": "Retorna una redirección hacia la página anterior (HTTP Redirect Back).",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 52,
+            "code": "            ->withInput($request->only('usuario'))",
+            "plain": "Conserva el nombre de usuario escrito para que no tenga que volver a escribirlo (nunca se devuelve la contraseña por seguridad).",
+            "jury": "Preserva en la sesión flash solo el campo seguro 'usuario' según directrices OWASP.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 53,
+            "code": "            ->withErrors(['captcha' => 'El código CAPTCHA es incorrecto.']);",
+            "plain": "Muestra en color rojo el mensaje de error de CAPTCHA incorrecto.",
+            "jury": "Inyecta el mensaje de error en la bolsa $errors de Blade.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 54,
+            "code": "    }",
+            "plain": "Cierra la condición de error de CAPTCHA.",
+            "jury": "Fin del bloque condicional del captcha.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 55,
+            "code": "",
+            "plain": "Línea en blanco divisoria.",
+            "jury": "Separación de bloques.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 56,
+            "code": "    // 2. Intentar autenticación",
+            "plain": "Comentario: indica que el captcha fue superado y ahora se procederá a autenticar credenciales.",
+            "jury": "Comentario de fase 2 del login.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 57,
+            "code": "    try {",
+            "plain": "Abre un bloque 'try' (tratar/intentar): todo lo que ocurra aquí adentro estará protegido ante fallos.",
+            "jury": "Estructura de control try-catch para manejo robusto de excepciones.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 58,
+            "code": "        $this->authService->authenticate(",
+            "plain": "Llama al método authenticate de la capa de servicio para verificar en PostgreSQL.",
+            "jury": "Delega la lógica transaccional a la clase AuthService.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 59,
+            "code": "            $request->input('usuario'),",
+            "plain": "Pasa el nombre de usuario escrito en la web.",
+            "jury": "Parámetro 1: username sanitizado.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 60,
+            "code": "            $request->input('password')",
+            "plain": "Pasa la contraseña escrita en la web.",
+            "jury": "Parámetro 2: password en texto plano.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 61,
+            "code": "        );",
+            "plain": "Cierra la llamada al método de autenticación.",
+            "jury": "Fin de invocación del servicio.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 62,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 63,
+            "code": "        $request->session()->regenerate();",
+            "plain": "Seguridad crítica: borra el identificador de la cookie de sesión y crea uno nuevo e irrepetible.",
+            "jury": "Medida de mitigación contra ataques de Session Fixation (Fijación de Sesión).",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 64,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 65,
+            "code": "        return redirect()->intended(route('dashboard'));",
+            "plain": "Si todo fue correcto, redirige al usuario hacia el Dashboard principal de trabajo.",
+            "jury": "Redirección autorizada al panel de control de 18 Experience.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 66,
+            "code": "    } catch (\\Exception $e) {",
+            "plain": "Atrapa cualquier error lanzado por el servicio (ej: clave mala o cuenta inactiva) en la variable $e.",
+            "jury": "Captura la excepción de negocio lanzada por el servicio.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 67,
+            "code": "        return back()",
+            "plain": "Devuelve al usuario a la pantalla de login.",
+            "jury": "Redirección hacia atrás con error.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 68,
+            "code": "            ->withInput($request->only('usuario'))",
+            "plain": "Conserva el usuario escrito para que no se borre de la pantalla.",
+            "jury": "Preservación del input del usuario.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 69,
+            "code": "            ->withErrors(['usuario' => $e->getMessage()]);",
+            "plain": "Muestra el mensaje amigable de error que vino de la excepción ('Usuario o contraseña incorrectos').",
+            "jury": "Mapea el mensaje de la excepción hacia la interfaz web.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 70,
+            "code": "    }",
+            "plain": "Cierra el bloque de captura de errores catch.",
+            "jury": "Fin de la captura de excepción.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
+          },
+          {
+            "num": 71,
+            "code": "}",
+            "plain": "Cierra el método login completo.",
+            "jury": "Fin de la función login.",
+            "file": "app/Modules/Seguridad/Controllers/AuthController.php"
           }
-        ],
-        questions: [
-          { q: "¿Por qué NO se utiliza una sentencia SQL DELETE para borrar destinos turísticos?", a: "Porque causaría un error de integridad referencial (Foreign Key) en PostgreSQL o dejaría huérfanos los tours, cotizaciones y reservas históricas que visitaron ese destino. En su lugar se utiliza 'Borrado Lógico' (activo = false)." }
+        ]
+      },
+      {
+        "name": "AuthService.php",
+        "path": "app/Modules/Seguridad/Services/AuthService.php",
+        "label": "Servicio (authenticate)",
+        "lines": [
+          {
+            "num": 56,
+            "code": "public function authenticate(string $username, string $password): Usuario",
+            "plain": "Declara la función del servicio que valida al usuario en PostgreSQL y devolverá el objeto Usuario.",
+            "jury": "Método de dominio tipado que concentra las reglas de autenticación del CU01.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 57,
+            "code": "{",
+            "plain": "Abre la función authenticate.",
+            "jury": "Apertura del método del servicio.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 58,
+            "code": "    $usuario = Usuario::with(['persona', 'rol'])",
+            "plain": "Consulta la tabla usuario y trae de una sola vez los datos de la persona física y de su rol.",
+            "jury": "Aplica Eager Loading con with() para resolver el problema de consultas N+1 en base de datos.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 59,
+            "code": "        ->where('nombre_usuario', trim($username))",
+            "plain": "Filtra la fila donde nombre_usuario coincida con el texto ingresado, limpiando espacios con trim().",
+            "jury": "Cláusula WHERE sanitizada contra espacios en blanco.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 60,
+            "code": "        ->first();",
+            "plain": "Ejecuta la consulta SQL y devuelve el primer registro coincidente o null si no existe.",
+            "jury": "Retorna la instancia Eloquent o null.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 61,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 62,
+            "code": "    if (!$usuario) {",
+            "plain": "Pregunta si la base de datos no encontró ningún registro con ese nombre de usuario.",
+            "jury": "Evaluación de existencia del usuario.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 63,
+            "code": "        throw new \\Exception('Usuario o contraseña incorrectos.');",
+            "plain": "Si no existe, arroja un mensaje genérico para no darle pistas a personas extrañas.",
+            "jury": "Mensaje genérico para mitigar ataques de enumeración de cuentas según OWASP.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 64,
+            "code": "    }",
+            "plain": "Cierra la condición de usuario no encontrado.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 65,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 66,
+            "code": "    if (!$usuario->activo) {",
+            "plain": "Pregunta si la cuenta del usuario está desactivada o dada de baja (activo = false).",
+            "jury": "Validación de estado activo del usuario.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 67,
+            "code": "        throw new \\Exception('Su cuenta de usuario se encuentra inactiva.');",
+            "plain": "Lanza error bloqueando el acceso a cuentas dadas de baja.",
+            "jury": "Excepción de cuenta inhabilitada.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 68,
+            "code": "    }",
+            "plain": "Cierra la condición de usuario inactivo.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 69,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 70,
+            "code": "    if (!$usuario->persona || !$usuario->persona->activo) {",
+            "plain": "Revisa que el trabajador humano asociado a esta cuenta no haya sido cesado de la empresa.",
+            "jury": "Validación de integridad con el personal de RRHH.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 71,
+            "code": "        throw new \\Exception('El registro de personal asociado está inactivo.');",
+            "plain": "Si el trabajador fue cesado, bloquea el acceso de inmediato.",
+            "jury": "Excepción de trabajador inactivo.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 72,
+            "code": "    }",
+            "plain": "Cierra la condición de persona inactiva.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 73,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 74,
+            "code": "    if (!$usuario->rol || !$usuario->rol->activo) {",
+            "plain": "Revisa que el rol asignado (Gerente, Counter, Contabilidad) siga vigente y habilitado en el sistema.",
+            "jury": "Control de acceso basado en roles (RBAC).",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 75,
+            "code": "        throw new \\Exception('El rol asignado a su cuenta no está habilitado.');",
+            "plain": "Si el rol fue deshabilitado administrativamente, bloquea la entrada.",
+            "jury": "Excepción de rol inhabilitado.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 76,
+            "code": "    }",
+            "plain": "Cierra la condición de rol inactivo.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 77,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 78,
+            "code": "    if (!$this->passwordService->verify($password, $usuario->password_hash)) {",
+            "plain": "Verifica matemáticamente si la contraseña escrita coincide con el hash encriptado Bcrypt guardado en PostgreSQL.",
+            "jury": "Verificación criptográfica segura unidireccional con hash Bcrypt salado.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 79,
+            "code": "        throw new \\Exception('Usuario o contraseña incorrectos.');",
+            "plain": "Si no coincide la contraseña, rechaza el acceso con mensaje genérico.",
+            "jury": "Excepción de credenciales incorrectas.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 80,
+            "code": "    }",
+            "plain": "Cierra la condición de contraseña incorrecta.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 81,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 82,
+            "code": "    // Actualizar último acceso (SRS CU01)",
+            "plain": "Comentario: indica cumplimiento de la regla de trazabilidad de último acceso.",
+            "jury": "Comentario de cumplimiento del CU01.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 83,
+            "code": "    $usuario->ultimo_acceso = now();",
+            "plain": "Toma la fecha y hora exacta del servidor en este instante y se la asigna al usuario.",
+            "jury": "Asignación del timestamp actual a la columna ultimo_acceso.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 84,
+            "code": "    $usuario->save();",
+            "plain": "Ejecuta un UPDATE en PostgreSQL para guardar la fecha de entrada en la base de datos.",
+            "jury": "Persistencia del cambio en la base de datos.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 85,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 86,
+            "code": "    Auth::login($usuario);",
+            "plain": "Registra formalmente al usuario en el sistema de sesiones de Laravel.",
+            "jury": "Autenticación formal en la sesión del framework.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 87,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 88,
+            "code": "    return $usuario;",
+            "plain": "Devuelve el objeto Usuario autenticado con todos sus datos cargados.",
+            "jury": "Retorno del modelo de usuario autenticado.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          },
+          {
+            "num": 89,
+            "code": "}",
+            "plain": "Cierra el método authenticate.",
+            "jury": "Fin de la función del servicio.",
+            "file": "app/Modules/Seguridad/Services/AuthService.php"
+          }
         ]
       }
-    };
+    ],
+    "questions": [
+      {
+        "q": "¿Cómo se guardan las contraseñas en la base de datos?",
+        "a": "Se almacenan cifradas con el algoritmo Bcrypt mediante Hash::make(). Nunca en texto plano, garantizando que nadie pueda leerlas ni siquiera los administradores de la base de datos."
+      },
+      {
+        "q": "¿Por qué se regenera la sesión con $request->session()->regenerate()?",
+        "a": "Para prevenir ataques de Fijación de Sesión (Session Fixation), asegurando que el identificador de sesión anterior quede invalidado y el usuario use una cookie fresca."
+      },
+      {
+        "q": "¿Qué valida el sistema antes de permitir el ingreso además de la contraseña?",
+        "a": "Valida 3 estados: 1) Que la cuenta de usuario esté activa, 2) Que la persona física trabajadora esté activa, y 3) Que el rol asignado esté habilitado."
+      }
+    ]
+  },
+  "rf02": {
+    "id": "rf02",
+    "code": "RF02",
+    "name": "RF02: Crear Trabajadores y Cuentas de Personal",
+    "badge": "Usuarios y Roles",
+    "files": [
+      {
+        "name": "UsuarioController.php",
+        "path": "app/Modules/Seguridad/Controllers/UsuarioController.php",
+        "label": "Controlador (store)",
+        "lines": [
+          {
+            "num": 70,
+            "code": "public function store(Request $request)",
+            "plain": "Inicia el método para procesar y guardar un nuevo trabajador con cuenta de acceso.",
+            "jury": "Controlador HTTP para creación de cuentas de personal (CU04).",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 71,
+            "code": "{",
+            "plain": "Abre el método store.",
+            "jury": "Apertura del método.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 72,
+            "code": "    $validated = $request->validate([",
+            "plain": "Ejecuta las reglas de validación sobre todos los campos enviados por Gerencia.",
+            "jury": "Validación de entrada del formulario de usuarios.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 73,
+            "code": "        'tipo_documento' => 'required|string|in:DNI,PASAPORTE,CARNET_EXTRANJERIA',",
+            "plain": "Obliga a seleccionar un documento legal permitido: DNI, PASAPORTE o CARNET_EXTRANJERIA.",
+            "jury": "Validación de tipos de documento oficiales.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 74,
+            "code": "        'numero_documento' => 'required|string|max:30',",
+            "plain": "Exige el número de documento y fija un límite de 30 caracteres.",
+            "jury": "Validación de presencia y longitud máxima del documento.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 75,
+            "code": "        'nombres' => 'required|string|max:100',",
+            "plain": "Exige nombres del trabajador con máximo 100 caracteres.",
+            "jury": "Campo obligatorio de nombres.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 76,
+            "code": "        'apellidos' => 'required|string|max:120',",
+            "plain": "Exige apellidos del trabajador con máximo 120 caracteres.",
+            "jury": "Campo obligatorio de apellidos.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 77,
+            "code": "        'telefono' => 'nullable|string|max:30',",
+            "plain": "Permite que el teléfono sea opcional (nullable) pero limita a 30 caracteres.",
+            "jury": "Campo opcional de teléfono.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 78,
+            "code": "        'correo' => 'nullable|email|max:120',",
+            "plain": "Permite correo opcional, pero si lo ingresan debe tener formato de email válido.",
+            "jury": "Validación de formato de correo electrónico.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 79,
+            "code": "        'id_rol' => ['required', 'integer', \\Illuminate\\Validation\\Rule::exists('rol', 'id_rol')->whereIn('nombre', UsuarioService::ROLES_PERSONAL)],",
+            "plain": "Regla estricta: obliga a que el rol exista en la base de datos y sea de personal (GERENTE, COUNTER o CONTABILIDAD).",
+            "jury": "Garantiza que solo se asignen roles autorizados para el personal administrativo.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 80,
+            "code": "        'nombre_usuario' => 'required|string|max:50|unique:usuario,nombre_usuario',",
+            "plain": "Exige nombre de usuario único en toda la empresa (unique:usuario,nombre_usuario) con máximo 50 caracteres.",
+            "jury": "Regla RN01: unicidad de cuentas de usuario en el sistema.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 81,
+            "code": "        'password' => 'required|string|min:' . UsuarioService::MIN_PASSWORD,",
+            "plain": "Exige una contraseña con longitud mínima de 8 caracteres (MIN_PASSWORD).",
+            "jury": "Política de contraseñas seguras según el SRS.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 82,
+            "code": "    ]);",
+            "plain": "Cierra la instrucción de validación del formulario.",
+            "jury": "Fin del bloque validate().",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 83,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 84,
+            "code": "    try {",
+            "plain": "Abre bloque try de protección contra fallos imprevistos.",
+            "jury": "Manejo de excepciones para la transacción.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 85,
+            "code": "        DB::transaction(function () use ($validated) {",
+            "plain": "Abre una transacción atómica SQL: asegura que persona, usuario y auditoría se guarden juntos o ninguno se guarde.",
+            "jury": "Atomicidad ACID: si falla la auditoría o el usuario, se ejecuta un Rollback automático en PostgreSQL.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 86,
+            "code": "            // 1. Validar y crear/actualizar Persona",
+            "plain": "Comentario: primera fase, gestionar la persona física.",
+            "jury": "Comentario de etapa 1.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 87,
+            "code": "            $this->validadorPersona->validar([",
+            "plain": "Llama al servicio validador de identidad de la agencia.",
+            "jury": "Invocación del validador de dominio de identidad.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 88,
+            "code": "                'tipo_documento' => $validated['tipo_documento'],",
+            "plain": "Pasa el tipo de documento validado.",
+            "jury": "Atributo tipo_documento.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 89,
+            "code": "                'numero_documento' => $validated['numero_documento'],",
+            "plain": "Pasa el número de documento validado.",
+            "jury": "Atributo numero_documento.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 90,
+            "code": "                'nombres' => $validated['nombres'],",
+            "plain": "Pasa los nombres validados.",
+            "jury": "Atributo nombres.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 91,
+            "code": "                'apellidos' => $validated['apellidos'],",
+            "plain": "Pasa los apellidos validados.",
+            "jury": "Atributo apellidos.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 92,
+            "code": "                'telefono' => $validated['telefono'] ?? null,",
+            "plain": "Pasa el teléfono o null si no se ingresó.",
+            "jury": "Atributo opcional telefono.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 93,
+            "code": "                'correo' => $validated['correo'] ?? null,",
+            "plain": "Pasa el correo o null si no se ingresó.",
+            "jury": "Atributo opcional correo.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 94,
+            "code": "            ]);",
+            "plain": "Cierra la validación de identidad.",
+            "jury": "Fin de validación de identidad.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 95,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 96,
+            "code": "            $persona = Persona::firstOrCreate(",
+            "plain": "Busca si ya existe una persona con ese tipo y número de documento. Si ya existe la reutiliza; si no, la crea.",
+            "jury": "Patrón firstOrCreate() para evitar duplicidad de entidades humanas en la base de datos.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 97,
+            "code": "                [",
+            "plain": "Abre arreglo de búsqueda por clave única.",
+            "jury": "Criterio de búsqueda por documento.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 98,
+            "code": "                    'tipo_documento' => $validated['tipo_documento'],",
+            "plain": "Busca coincidencia en tipo_documento.",
+            "jury": "Condición WHERE tipo_documento.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 99,
+            "code": "                    'numero_documento' => $validated['numero_documento'],",
+            "plain": "Busca coincidencia en numero_documento.",
+            "jury": "Condición WHERE numero_documento.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 100,
+            "code": "                ],",
+            "plain": "Cierra criterio de búsqueda.",
+            "jury": "Fin del criterio WHERE.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 101,
+            "code": "                [",
+            "plain": "Abre arreglo de datos para insertar si la persona no existía.",
+            "jury": "Datos a insertar en INSERT.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 102,
+            "code": "                    'nombres' => $validated['nombres'],",
+            "plain": "Guarda nombres.",
+            "jury": "Columna nombres.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 103,
+            "code": "                    'apellidos' => $validated['apellidos'],",
+            "plain": "Guarda apellidos.",
+            "jury": "Columna apellidos.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 104,
+            "code": "                    'telefono' => $validated['telefono'] ?? null,",
+            "plain": "Guarda teléfono o null.",
+            "jury": "Columna telefono.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 105,
+            "code": "                    'correo' => $validated['correo'] ?? null,",
+            "plain": "Guarda correo o null.",
+            "jury": "Columna correo.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 106,
+            "code": "                    'activo' => 1,",
+            "plain": "Fija el estado activo en 1 (habilitado).",
+            "jury": "Columna activo en true.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 107,
+            "code": "                ]",
+            "plain": "Cierra arreglo de datos.",
+            "jury": "Fin de datos INSERT.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 108,
+            "code": "            );",
+            "plain": "Cierra firstOrCreate().",
+            "jury": "Fin de firstOrCreate().",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 109,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 110,
+            "code": "            // 2. Crear Usuario",
+            "plain": "Comentario: segunda fase, creación de la cuenta de acceso.",
+            "jury": "Comentario de etapa 2.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 111,
+            "code": "            $usuario = Usuario::create([",
+            "plain": "Inserta la nueva fila en la tabla usuario de PostgreSQL.",
+            "jury": "Creación de la entidad Usuario con Eloquent.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 112,
+            "code": "                'id_persona' => $persona->id_persona,",
+            "plain": "Conecta la cuenta con el ID de la persona física creada o reutilizada.",
+            "jury": "Clave foránea hacia la tabla persona.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 113,
+            "code": "                'id_rol' => (int) $validated['id_rol'],",
+            "plain": "Asigna el ID del rol administrativo seleccionado.",
+            "jury": "Clave foránea hacia la tabla rol.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 114,
+            "code": "                'nombre_usuario' => trim($validated['nombre_usuario']),",
+            "plain": "Guarda el nombre de usuario limpio sin espacios.",
+            "jury": "Columna nombre_usuario sanitizada.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 115,
+            "code": "                'password_hash' => Hash::make($validated['password']),",
+            "plain": "Convierte la contraseña ingresada en un hash criptográfico irreversible con Bcrypt.",
+            "jury": "Cifrado seguro unidireccional de contraseñas con Bcrypt mediante Hash::make().",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 116,
+            "code": "                'activo' => 1,",
+            "plain": "Fija la cuenta como activa desde su creación.",
+            "jury": "Columna activo = 1.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 117,
+            "code": "                'fecha_creacion' => now(),",
+            "plain": "Registra la fecha y hora exacta de creación de la cuenta.",
+            "jury": "Columna fecha_creacion con timestamp actual.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 118,
+            "code": "            ]);",
+            "plain": "Cierra la creación del usuario.",
+            "jury": "Fin de Usuario::create().",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 119,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 120,
+            "code": "            Auditoria::registrar(",
+            "plain": "Registra en la tabla de auditoría corporativa quién ejecutó la acción.",
+            "jury": "Cumplimiento obligatorio de la regla de auditoría RN16.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 121,
+            "code": "                Auth::id(),",
+            "plain": "Guarda el ID del usuario actualmente conectado que creó la cuenta.",
+            "jury": "ID del operador responsable.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 122,
+            "code": "                'CREAR_USUARIO',",
+            "plain": "Nombre clave de la acción de auditoría.",
+            "jury": "Acción auditada.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 123,
+            "code": "                'usuario',",
+            "plain": "Tabla de la base de datos que fue modificada.",
+            "jury": "Entidad auditada.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 124,
+            "code": "                $usuario->id_usuario,",
+            "plain": "ID del nuevo registro creado.",
+            "jury": "Clave primaria del registro.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 125,
+            "code": "                \"Usuario {$usuario->nombre_usuario} creado con rol ID {$usuario->id_rol}.\"",
+            "plain": "Descripción textual del cambio realizado para los reportes de Gerencia.",
+            "jury": "Detalle descriptivo de auditoría.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 126,
+            "code": "            );",
+            "plain": "Cierra la instrucción de auditoría.",
+            "jury": "Fin de Auditoria::registrar().",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 127,
+            "code": "        });",
+            "plain": "Cierra y confirma la transacción atómica (hace COMMIT si todo salió bien).",
+            "jury": "Commit exitoso de la transacción.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 128,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 129,
+            "code": "        return redirect()->route('usuarios.index')",
+            "plain": "Redirige hacia la pantalla del listado de usuarios de personal.",
+            "jury": "Redirección HTTP al índice del módulo.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 130,
+            "code": "            ->with('success', \"Usuario '{$validated['nombre_usuario']}' creado exitosamente.\");",
+            "plain": "Muestra un mensaje de confirmación en color verde en la pantalla.",
+            "jury": "Mensaje flash de éxito.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 131,
+            "code": "    } catch (Exception $e) {",
+            "plain": "Si ocurrió algún error en la validación o en la transacción, se captura aquí.",
+            "jury": "Captura de error de creación.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 132,
+            "code": "        return back()->withInput()->with('error', $e->getMessage());",
+            "plain": "Devuelve al formulario manteniendo los datos ingresados y mostrando el error en rojo.",
+            "jury": "Retorno con preservación de formulario y alerta de error.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 133,
+            "code": "    }",
+            "plain": "Cierra el bloque catch.",
+            "jury": "Fin del bloque catch.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          },
+          {
+            "num": 134,
+            "code": "}",
+            "plain": "Cierra el método store.",
+            "jury": "Fin de la función store.",
+            "file": "app/Modules/Seguridad/Controllers/UsuarioController.php"
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "q": "¿Por qué se utiliza DB::transaction() al registrar un usuario?",
+        "a": "Porque se guardan datos en 3 tablas (persona, usuario y auditoría). Si una falla, la transacción hace ROLLBACK completo, evitando que queden personas huérfanas sin usuario o usuarios sin auditoría."
+      },
+      {
+        "q": "¿Qué hace Persona::firstOrCreate()?",
+        "a": "Busca si ya existe una persona con ese tipo y número de documento. Si ya existe la reutiliza, y si no existe la crea en ese instante, impidiendo que una persona física se duplique."
+      },
+      {
+        "q": "¿Qué rol tiene permiso para cambiar la contraseña de otro usuario?",
+        "a": "Solo el rol GERENTE (CU05), y al hacerlo se registra en la auditoría del sistema quién hizo el cambio pero nunca se registra la contraseña en texto plano."
+      }
+    ]
+  },
+  "rf03": {
+    "id": "rf03",
+    "code": "RF03",
+    "name": "RF03: Panel de Control y Resumen Operativo",
+    "badge": "Dashboard y KPIs",
+    "files": [
+      {
+        "name": "DashboardController.php",
+        "path": "app/Modules/Seguridad/Controllers/DashboardController.php",
+        "label": "Controlador (index)",
+        "lines": [
+          {
+            "num": 10,
+            "code": "public function index()",
+            "plain": "Inicia la función que carga todos los indicadores del Dashboard al entrar al sistema.",
+            "jury": "Controlador principal para el resumen operativo del día (CU02).",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 11,
+            "code": "{",
+            "plain": "Abre el método index.",
+            "jury": "Apertura del método.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 12,
+            "code": "    if (auth()->check() && auth()->user()->tieneRol('CLIENTE')) {",
+            "plain": "Pregunta si la persona conectada tiene el rol CLIENTE.",
+            "jury": "Control de acceso RBAC por rol.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 13,
+            "code": "        return redirect()->route('portal.dashboard');",
+            "plain": "Si es un cliente, lo redirige a su propio portal personal para que no vea información interna de la agencia.",
+            "jury": "Segregación de interfaces: el cliente es derivado a portal.dashboard.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 14,
+            "code": "    }",
+            "plain": "Cierra la condición de cliente.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 15,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 16,
+            "code": "    // 1. Indicadores del día (CU02)",
+            "plain": "Comentario: cálculos de los KPIs del día según el caso de uso CU02.",
+            "jury": "Comentario de cálculo de KPIs.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 17,
+            "code": "    $hoy = now()->toDateString();",
+            "plain": "Obtiene la fecha actual del servidor en formato YYYY-MM-DD (ejemplo: 2026-11-25).",
+            "jury": "Definición del parámetro de fecha para la jornada operativa.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 18,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 19,
+            "code": "    $reservasHoy = DB::table('reserva')",
+            "plain": "Inicia consulta a la tabla reserva en PostgreSQL.",
+            "jury": "Query Builder sobre la tabla reserva.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 20,
+            "code": "        ->whereDate('fecha_reserva', $hoy)",
+            "plain": "Filtra únicamente las reservas creadas en el día de hoy.",
+            "jury": "Cláusula whereDate sobre fecha_reserva.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 21,
+            "code": "        ->where('estado', '<>', 'CANCELADA')",
+            "plain": "Excluye las reservas anuladas o canceladas.",
+            "jury": "Filtro de exclusión de reservas canceladas.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 22,
+            "code": "        ->count();",
+            "plain": "Cuenta el total de filas válidas encontradas.",
+            "jury": "Operación de agregación count() para el KPI 1.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 23,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 24,
+            "code": "    $salidasHoy = DB::table('salida')",
+            "plain": "Inicia consulta a la tabla salida (grupos turísticos que parten de viaje).",
+            "jury": "Query Builder sobre la tabla salida.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 25,
+            "code": "        ->whereDate('fecha', $hoy)",
+            "plain": "Filtra salidas programadas para el día de hoy.",
+            "jury": "Filtro whereDate sobre la fecha de salida.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 26,
+            "code": "        ->where('estado', '<>', 'CANCELADA')",
+            "plain": "Excluye salidas canceladas por imprevistos.",
+            "jury": "Filtro de salidas activas.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 27,
+            "code": "        ->count();",
+            "plain": "Cuenta cuántas salidas operativas parten hoy.",
+            "jury": "Operación count() para el KPI 2 (salidas del día).",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 28,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 29,
+            "code": "    $pagosPendientes = DB::table('pago')",
+            "plain": "Inicia consulta a la tabla pago.",
+            "jury": "Query Builder sobre la tabla pago.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 30,
+            "code": "        ->where('estado', 'PENDIENTE_VALIDACION')",
+            "plain": "Filtra pagos que los clientes subieron pero Contabilidad aún no ha revisado.",
+            "jury": "Filtro de estado PENDIENTE_VALIDACION.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 31,
+            "code": "        ->count();",
+            "plain": "Cuenta cuántos pagos están esperando validación humana.",
+            "jury": "KPI 3: semáforo de pendientes de contabilidad.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 32,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 33,
+            "code": "    $totalRecaudado = (float) DB::table('pago')",
+            "plain": "Inicia cálculo del dinero real en caja.",
+            "jury": "Query Builder para cálculo financiero neto.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 34,
+            "code": "        ->where('estado', 'VALIDADO')",
+            "plain": "Filtra únicamente pagos aprobados por Contabilidad.",
+            "jury": "Filtro de pagos en estado VALIDADO.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 35,
+            "code": "        ->sum(DB::raw('monto_base - monto_base_devuelto'));",
+            "plain": "Calcula la suma neta restando las devoluciones por cancelaciones (monto_base - monto_base_devuelto).",
+            "jury": "Cálculo de recaudación neta real en caja mediante agregación sum() SQL pura.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 36,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 37,
+            "code": "    // 2. Próximas salidas obtenidas de la vista vw_disponibilidad_salida (CU02)",
+            "plain": "Comentario: consulta de salidas usando la vista SQL optimizada.",
+            "jury": "Comentario de uso de vista SQL.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 38,
+            "code": "    $proximasSalidas = DB::table('vw_disponibilidad_salida')",
+            "plain": "Consulta la vista vw_disponibilidad_salida creada en PostgreSQL.",
+            "jury": "Acceso a la vista SQL que ya tiene precalculados los cupos disponibles.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 39,
+            "code": "        ->whereDate('fecha', '>=', $hoy)",
+            "plain": "Filtra salidas desde el día de hoy hacia el futuro.",
+            "jury": "Filtro cronológico >= hoy.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 40,
+            "code": "        ->whereIn('estado', ['PROGRAMADA', 'COMPLETA'])",
+            "plain": "Solo incluye salidas en estado PROGRAMADA o COMPLETA.",
+            "jury": "Filtro de vigencia operativa.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 41,
+            "code": "        ->orderBy('fecha', 'asc')",
+            "plain": "Ordena cronológicamente por fecha más cercana primero.",
+            "jury": "Ordenamiento primario ascendente por fecha.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 42,
+            "code": "        ->orderBy('hora', 'asc')",
+            "plain": "Ordena secundariamente por hora de partida.",
+            "jury": "Ordenamiento secundario por hora.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 43,
+            "code": "        ->limit(5)",
+            "plain": "Limita a las 5 salidas más próximas.",
+            "jury": "Limitación top 5 para el widget del dashboard.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 44,
+            "code": "        ->get();",
+            "plain": "Ejecuta la consulta y trae los registros a memoria.",
+            "jury": "Materialización de resultados.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 45,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 46,
+            "code": "    // 3. Gráficos Analíticos de Gestión (RF14)",
+            "plain": "Comentario: extracción de datos para gráficos de Chart.js.",
+            "jury": "Comentario de gráficos analíticos RF14.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 47,
+            "code": "    $ventasMes = DB::table('reserva')",
+            "plain": "Inicia consulta analítica de reservas.",
+            "jury": "Query Builder analítico sobre reservas.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 48,
+            "code": "        ->where('estado', '!=', 'CANCELADA')",
+            "plain": "Excluye reservas canceladas.",
+            "jury": "Filtro de ventas reales.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 49,
+            "code": "        ->selectRaw(\"TO_CHAR(fecha_reserva, 'YYYY-MM') as mes, SUM(total_contratado) as total\")",
+            "plain": "Agrupa por año y mes usando TO_CHAR() en PostgreSQL y suma el dinero contratado.",
+            "jury": "Agrupación temporal y agregación monetaria en PostgreSQL.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 50,
+            "code": "        ->groupBy(DB::raw(\"TO_CHAR(fecha_reserva, 'YYYY-MM')\"))",
+            "plain": "Agrupa los totales por cada mes.",
+            "jury": "Cláusula GROUP BY mensual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 51,
+            "code": "        ->orderBy('mes', 'asc')",
+            "plain": "Ordena los meses de más antiguo a más reciente.",
+            "jury": "Orden cronológico ascendente.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 52,
+            "code": "        ->limit(6)",
+            "plain": "Toma los últimos 6 meses para el gráfico de barras.",
+            "jury": "Limitación a 6 periodos mensuales.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 53,
+            "code": "        ->get();",
+            "plain": "Obtiene los datos analíticos.",
+            "jury": "Materialización del dataset del gráfico.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 54,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 55,
+            "code": "    $labelsMes = $ventasMes->pluck('mes')->toArray();",
+            "plain": "Extrae la lista de nombres de los meses en un arreglo para el eje X de Chart.js.",
+            "jury": "Mapeo de etiquetas temporales para la librería gráfica.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 56,
+            "code": "    $dataVentas = $ventasMes->pluck('total')->map(fn($v) => (float)$v)->toArray();",
+            "plain": "Extrae los montos en números decimales para las barras del gráfico.",
+            "jury": "Mapeo de serie de datos numéricos para la gráfica.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 57,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 58,
+            "code": "    $demandaTours = DB::table('detalle_reserva as dr')",
+            "plain": "Inicia consulta para conocer los paquetes turísticos con más pasajeros.",
+            "jury": "Query Builder para análisis de demanda turística.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 59,
+            "code": "        ->join('producto_turistico as pt', 'pt.id_producto', '=', 'dr.id_producto')",
+            "plain": "Cruza con la tabla producto_turistico para obtener el nombre del tour.",
+            "jury": "JOIN con la tabla de productos turísticos.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 60,
+            "code": "        ->join('reserva as r', 'r.id_reserva', '=', 'dr.id_reserva')",
+            "plain": "Cruza con la tabla reserva para verificar el estado de la venta.",
+            "jury": "JOIN con la tabla reserva.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 61,
+            "code": "        ->where('r.estado', '!=', 'CANCELADA')",
+            "plain": "Solo toma ventas vigentes.",
+            "jury": "Filtro de reservas válidas.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 62,
+            "code": "        ->select('pt.nombre', DB::raw('SUM(dr.cantidad_pasajeros) as total_pasajeros'))",
+            "plain": "Suma la cantidad de pasajeros que compraron cada tour.",
+            "jury": "Agregación SUM(cantidad_pasajeros).",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 63,
+            "code": "        ->groupBy('pt.nombre')",
+            "plain": "Agrupa por nombre del tour.",
+            "jury": "Cláusula GROUP BY pt.nombre.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          },
+          {
+            "num": 64,
+            "code": "        ->get();",
+            "plain": "Obtiene el ranking de tours más demandados.",
+            "jury": "Materialización de datos de demanda.",
+            "file": "app/Modules/Seguridad/Controllers/DashboardController.php"
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "q": "¿Por qué se utiliza la vista 'vw_disponibilidad_salida' en lugar de hacer consultas con joins directos en PHP?",
+        "a": "Porque la vista SQL ya tiene precalculada la disponibilidad de cupos en el motor PostgreSQL, mejorando drásticamente el rendimiento y evitando código repetitivo."
+      },
+      {
+        "q": "¿Qué hace la fórmula 'monto_base - monto_base_devuelto'?",
+        "a": "Calcula la recaudación neta real de la agencia: suma los pagos validados pero descuenta cualquier dinero reembolsado al cliente por cancelaciones."
+      }
+    ]
+  },
+  "rf04": {
+    "id": "rf04",
+    "code": "RF04",
+    "name": "RF04: Registro y Gestión de Clientes",
+    "badge": "Clientes y RN02",
+    "files": [
+      {
+        "name": "ClienteService.php",
+        "path": "app/Modules/Clientes/Services/ClienteService.php",
+        "label": "Servicio (registrar)",
+        "lines": [
+          {
+            "num": 99,
+            "code": "public function registrar(array $datosPersona, string $tipoCliente, int $idUsuario): Cliente",
+            "plain": "Inicia la función del servicio para dar de alta a un nuevo cliente en el sistema.",
+            "jury": "Método de servicio tipado para el registro integral de clientes (CU08).",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 100,
+            "code": "{",
+            "plain": "Abre el método registrar.",
+            "jury": "Apertura del método.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 101,
+            "code": "    // 1. Validar reglas de persona",
+            "plain": "Comentario: primera fase, validación de la persona física.",
+            "jury": "Comentario de validación de identidad.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 102,
+            "code": "    $this->validador->validar($datosPersona);",
+            "plain": "Llama al validador de personas para comprobar que el DNI tenga 8 dígitos o que el RUC sea válido.",
+            "jury": "Ejecución de validaciones oficiales de identidad nacional.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 103,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 104,
+            "code": "    $tipoDoc = strtoupper(trim($datosPersona['tipo_documento']));",
+            "plain": "Limpia y convierte a mayúsculas el tipo de documento (DNI, PASAPORTE, etc.).",
+            "jury": "Sanitización del tipo de documento.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 105,
+            "code": "    $numDoc = trim($datosPersona['numero_documento']);",
+            "plain": "Limpia espacios en blanco accidentales del número de documento.",
+            "jury": "Sanitización del número de documento.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 106,
+            "code": "    $tipoCliente = strtoupper(trim($tipoCliente));",
+            "plain": "Convierte el tipo de cliente a mayúsculas.",
+            "jury": "Sanitización del tipo de cliente.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 107,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 108,
+            "code": "    if (!in_array($tipoCliente, ['DIRECTO', 'CORPORATIVO'])) {",
+            "plain": "Revisa si el tipo de cliente no es ni DIRECTO ni CORPORATIVO.",
+            "jury": "Validación de clasificación de clientes permitida.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 109,
+            "code": "        $tipoCliente = 'DIRECTO';",
+            "plain": "Si no era ninguno de ellos, le asigna DIRECTO por defecto según las reglas del SRS.",
+            "jury": "Valor predeterminado DIRECTO según el SRS.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 110,
+            "code": "    }",
+            "plain": "Cierra la condición de tipo de cliente.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 111,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 112,
+            "code": "    return DB::transaction(function () use ($datosPersona, $tipoDoc, $numDoc, $tipoCliente, $idUsuario) {",
+            "plain": "Abre la transacción atómica SQL: garantiza consistencia entre persona, cliente y auditoría.",
+            "jury": "Apertura de transacción atómica en PostgreSQL.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 113,
+            "code": "        // Si la persona ya existe y ya es cliente, no se registra de nuevo (RN02)",
+            "plain": "Comentario: regla de negocio RN02 de unicidad de clientes.",
+            "jury": "Comentario de cumplimiento de la regla RN02.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 114,
+            "code": "        $personaExistente = $this->buscarPersonaPorDocumento($tipoDoc, $numDoc);",
+            "plain": "Busca en la tabla persona si ya existe alguien registrado con ese número y tipo de documento.",
+            "jury": "Búsqueda previa de la entidad Persona en PostgreSQL.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 115,
+            "code": "        if ($personaExistente && Cliente::where('id_persona', $personaExistente->id_persona)->exists()) {",
+            "plain": "Pregunta: '¿Esa persona ya existe Y ADEMÁS ya tiene un registro en la tabla cliente?'.",
+            "jury": "Evaluación de duplicidad de cliente según RN02.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 116,
+            "code": "            throw new \\InvalidArgumentException('La persona ya está registrada como cliente.');",
+            "plain": "Si ya es cliente, frena la operación arrojando el error para no duplicar fichas.",
+            "jury": "Excepción de validación de negocio: unicidad de clientes.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 117,
+            "code": "        }",
+            "plain": "Cierra la condición de cliente duplicado.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 118,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 119,
+            "code": "        $persona = $this->obtenerOCrearPersona($datosPersona);",
+            "plain": "Si la persona ya existía (ej: viajó antes como acompañante), la reutiliza; si no, la crea.",
+            "jury": "Reutilización o creación de la persona física evitando redundancia.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 120,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 121,
+            "code": "        // Crear el registro de cliente",
+            "plain": "Comentario: creación de la entidad cliente.",
+            "jury": "Comentario de etapa de inserción.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 122,
+            "code": "        $cliente = Cliente::create([",
+            "plain": "Inserta la fila en la tabla cliente de PostgreSQL.",
+            "jury": "Creación de la entidad Cliente con Eloquent.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 123,
+            "code": "            'id_persona' => $persona->id_persona,",
+            "plain": "Conecta el cliente con el ID de la persona física.",
+            "jury": "Clave foránea hacia persona.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 124,
+            "code": "            'fecha_registro' => now(),",
+            "plain": "Asigna la fecha y hora actual como fecha de alta.",
+            "jury": "Timestamp de registro.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 125,
+            "code": "            'tipo_cliente' => $tipoCliente,",
+            "plain": "Asigna la clasificación DIRECTO o CORPORATIVO.",
+            "jury": "Columna tipo_cliente.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 126,
+            "code": "            'activo' => true,",
+            "plain": "Fija el cliente como activo (true).",
+            "jury": "Estado activo = true.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 127,
+            "code": "        ]);",
+            "plain": "Cierra la creación del cliente.",
+            "jury": "Fin de Cliente::create().",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 128,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 129,
+            "code": "        // Auditoría",
+            "plain": "Comentario: trazabilidad del registro.",
+            "jury": "Comentario de auditoría.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 130,
+            "code": "        Auditoria::registrar(",
+            "plain": "Registra en la bitácora corporativa el alta del cliente.",
+            "jury": "Registro de auditoría bajo la regla RN16.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 131,
+            "code": "            $idUsuario,",
+            "plain": "ID del trabajador que atendió al cliente.",
+            "jury": "Operador responsable.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 132,
+            "code": "            'CREAR_CLIENTE',",
+            "plain": "Acción registrada en la bitácora.",
+            "jury": "Acción auditada.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 133,
+            "code": "            'cliente',",
+            "plain": "Tabla de la base de datos afectada.",
+            "jury": "Entidad auditada.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 134,
+            "code": "            $cliente->id_cliente,",
+            "plain": "ID del nuevo cliente registrado.",
+            "jury": "Clave primaria del cliente.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 135,
+            "code": "            \"Cliente registrado: {$persona->nombre_completo} ({$tipoDoc} {$numDoc})\"",
+            "plain": "Descripción con nombre completo y documento para reportes.",
+            "jury": "Detalle descriptivo de auditoría.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 136,
+            "code": "        );",
+            "plain": "Cierra la instrucción de auditoría.",
+            "jury": "Fin de Auditoria::registrar().",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 137,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 138,
+            "code": "        return $cliente;",
+            "plain": "Devuelve el objeto Cliente recién registrado.",
+            "jury": "Retorno del modelo Cliente.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 139,
+            "code": "    });",
+            "plain": "Cierra y confirma la transacción atómica (COMMIT).",
+            "jury": "Fin de la transacción atómica.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          },
+          {
+            "num": 140,
+            "code": "}",
+            "plain": "Cierra el método registrar.",
+            "jury": "Fin de la función registrar.",
+            "file": "app/Modules/Clientes/Services/ClienteService.php"
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "q": "¿Qué exige la Regla de Negocio RN02 sobre los clientes?",
+        "a": "Establece que una persona física no puede ser registrada más de una vez como cliente. Si el DNI ya existe vinculado a un cliente, el sistema rechaza el intento con una excepción clara."
+      },
+      {
+        "q": "¿Qué pasa si una persona ya fue pasajera acompañante en un tour y ahora quiere registrarse como cliente?",
+        "a": "La función obtenerOCrearPersona() detecta que su registro de 'persona' ya existe y lo reutiliza, creándole únicamente su nuevo rol en la tabla 'cliente' sin duplicar su identidad."
+      }
+    ]
+  },
+  "rf05": {
+    "id": "rf05",
+    "code": "RF05",
+    "name": "RF05: Catálogo de Destinos Turísticos",
+    "badge": "Destinos y Soft-State",
+    "files": [
+      {
+        "name": "CatalogoService.php",
+        "path": "app/Modules/Catalogo/Services/CatalogoService.php",
+        "label": "Servicio (crear y toggle)",
+        "lines": [
+          {
+            "num": 37,
+            "code": "public function crearDestino(array $datos, int $idUsuario): Destino",
+            "plain": "Inicia la función del servicio para crear un nuevo destino turístico en Tacna o el sur del país.",
+            "jury": "Método de servicio para registro de destinos turísticos (CU10).",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 38,
+            "code": "{",
+            "plain": "Abre el método crearDestino.",
+            "jury": "Apertura del método.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 39,
+            "code": "    $nombre = trim($datos['nombre'] ?? '');",
+            "plain": "Limpia espacios en blanco del nombre del destino.",
+            "jury": "Sanitización del nombre del destino.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 40,
+            "code": "    if (empty($nombre)) {",
+            "plain": "Revisa si el nombre llegó vacío.",
+            "jury": "Validación de obligatoriedad.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 41,
+            "code": "        throw new \\InvalidArgumentException('El nombre del destino es obligatorio.');",
+            "plain": "Lanza error si no se ingresó un nombre.",
+            "jury": "Excepción de campo requerido.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 42,
+            "code": "    }",
+            "plain": "Cierra la condición de nombre vacío.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 43,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 44,
+            "code": "    if (Destino::where('nombre', $nombre)->exists()) {",
+            "plain": "Pregunta a PostgreSQL si ya existe otro destino con ese mismo nombre.",
+            "jury": "Control de unicidad de nombre de destino en base de datos.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 45,
+            "code": "        throw new \\InvalidArgumentException('Ya existe un destino registrado con ese nombre.');",
+            "plain": "Si ya existe, bloquea el intento impidiendo destinos duplicados.",
+            "jury": "Excepción de destino duplicado.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 46,
+            "code": "    }",
+            "plain": "Cierra la condición de destino repetido.",
+            "jury": "Fin del if.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 47,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 48,
+            "code": "    return DB::transaction(function () use ($datos, $nombre, $idUsuario) {",
+            "plain": "Abre la transacción atómica SQL para guardar destino y auditoría juntos.",
+            "jury": "Transacción atómica en PostgreSQL.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 49,
+            "code": "        $destino = Destino::create([",
+            "plain": "Inserta la fila en la tabla destino.",
+            "jury": "Creación de la entidad Destino.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 50,
+            "code": "            'nombre' => $nombre,",
+            "plain": "Guarda el nombre del destino turístico.",
+            "jury": "Columna nombre.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 51,
+            "code": "            'descripcion' => $datos['descripcion'] ?? null,",
+            "plain": "Guarda la descripción o null si no se ingresó.",
+            "jury": "Columna descripcion.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 52,
+            "code": "            'ubicacion' => $datos['ubicacion'] ?? null,",
+            "plain": "Guarda la ubicación geográfica o null.",
+            "jury": "Columna ubicacion.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 53,
+            "code": "            'altitud_msnm' => !empty($datos['altitud_msnm']) ? $datos['altitud_msnm'] : null,",
+            "plain": "Guarda la altitud en metros sobre el nivel del mar si se proporcionó.",
+            "jury": "Columna altitud_msnm para ficha técnica.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 54,
+            "code": "            'como_llegar' => $datos['como_llegar'] ?? null,",
+            "plain": "Guarda instrucciones de cómo llegar al destino.",
+            "jury": "Columna como_llegar.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 55,
+            "code": "            'temporada_recomendada' => $datos['temporada_recomendada'] ?? null,",
+            "plain": "Guarda los mejores meses para visitarlo.",
+            "jury": "Columna temporada_recomendada.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 56,
+            "code": "            'recomendaciones' => $datos['recomendaciones'] ?? null,",
+            "plain": "Guarda ropa o tips recomendados.",
+            "jury": "Columna recomendaciones.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 57,
+            "code": "            'activo' => true,",
+            "plain": "Fija el destino como activo (true) listo para armar tours.",
+            "jury": "Estado activo inicial en true.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 58,
+            "code": "        ]);",
+            "plain": "Cierra la creación del destino.",
+            "jury": "Fin de Destino::create().",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 59,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 60,
+            "code": "        Auditoria::registrar($idUsuario, 'CREAR_DESTINO', 'destino', $destino->id_destino, \"Destino creado: {$nombre}\");",
+            "plain": "Registra en la auditoría corporativa qué trabajador dio de alta el destino.",
+            "jury": "Cumplimiento de la regla de auditoría RN16.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 61,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 62,
+            "code": "        return $destino;",
+            "plain": "Devuelve el objeto Destino recién creado.",
+            "jury": "Retorno del modelo Destino.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 63,
+            "code": "    });",
+            "plain": "Cierra y confirma la transacción atómica.",
+            "jury": "Fin de la transacción atómica.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 64,
+            "code": "}",
+            "plain": "Cierra el método crearDestino.",
+            "jury": "Fin de la función crearDestino.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 96,
+            "code": "public function cambiarEstadoDestino(int $id, bool $activo, int $idUsuario): Destino",
+            "plain": "Función para activar o desactivar un destino turístico sin usar DELETE.",
+            "jury": "Método de servicio para borrado lógico (Soft Delete / Soft State).",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 97,
+            "code": "{",
+            "plain": "Abre la función cambiarEstadoDestino.",
+            "jury": "Apertura del método.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 98,
+            "code": "    $destino = Destino::findOrFail($id);",
+            "plain": "Busca el destino por su ID primario o detiene con error 404 si no existe.",
+            "jury": "Recuperación de la entidad o excepción Not Found.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 99,
+            "code": "    $destino->activo = $activo;",
+            "plain": "Cambia el campo 'activo' a true o false según lo solicitado.",
+            "jury": "Modificación del flag booleano activo.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 100,
+            "code": "    $destino->save();",
+            "plain": "Ejecuta UPDATE en PostgreSQL guardando el nuevo estado sin borrar ningún dato histórico.",
+            "jury": "Persistencia del borrado lógico en base de datos.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 101,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          },
+          {
+            "num": 102,
+            "code": "    Auditoria::registrar($idUsuario, 'CAMBIAR_ESTADO_DESTINO', 'destino', $destino->id_destino, ...);",
+            "plain": "Registra en auditoría si el destino fue habilitado o inhabilitado.",
+            "jury": "Auditoría del cambio de estado del destino.",
+            "file": "app/Modules/Catalogo/Services/CatalogoService.php"
+          }
+        ]
+      },
+      {
+        "name": "DestinoController.php",
+        "path": "app/Modules/Catalogo/Controllers/DestinoController.php",
+        "label": "Controlador (toggleEstado)",
+        "lines": [
+          {
+            "num": 53,
+            "code": "public function toggleEstado(int $id)",
+            "plain": "Método del controlador que responde al clic del botón Activar/Desactivar en la web.",
+            "jury": "Controlador HTTP para alternar el estado del destino (CU10).",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 54,
+            "code": "{",
+            "plain": "Abre el método toggleEstado.",
+            "jury": "Apertura del método.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 55,
+            "code": "    try {",
+            "plain": "Abre bloque try de protección.",
+            "jury": "Manejo de excepciones.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 56,
+            "code": "        $destino = \\App\\Modules\\Catalogo\\Models\\Destino::findOrFail($id);",
+            "plain": "Busca el destino por su ID en la base de datos.",
+            "jury": "Búsqueda de la entidad en base de datos.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 57,
+            "code": "        $nuevoEstado = !$destino->activo;",
+            "plain": "Invierte el estado: si estaba activo (true), pasa a inactivo (false); si estaba inactivo, pasa a activo.",
+            "jury": "Inversión booleana del estado vigente.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 58,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 59,
+            "code": "        $this->catalogoService->cambiarEstadoDestino($id, $nuevoEstado, Auth::id());",
+            "plain": "Llama al servicio de catálogo para aplicar el borrado lógico y registrar la auditoría.",
+            "jury": "Delegación al servicio para persistir el nuevo estado y auditar.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 60,
+            "code": "",
+            "plain": "Línea en blanco.",
+            "jury": "Separación visual.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 61,
+            "code": "        $msg = $nuevoEstado ? 'Destino activado correctamente.' : 'Destino desactivado correctamente.';",
+            "plain": "Prepara el mensaje dinámico en español según si se prendió o se apagó.",
+            "jury": "Construcción del mensaje de confirmación para el usuario.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 62,
+            "code": "        return redirect()->route('destinos.index')->with('success', $msg);",
+            "plain": "Redirige a la tabla de destinos mostrando el mensaje verde de confirmación.",
+            "jury": "Redirección con mensaje flash de éxito.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 63,
+            "code": "    } catch (\\Exception $e) {",
+            "plain": "Si ocurrió algún error, lo atrapa aquí.",
+            "jury": "Captura de excepciones.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 64,
+            "code": "        return back()->with('error', $e->getMessage());",
+            "plain": "Regresa a la pantalla anterior mostrando el error en rojo.",
+            "jury": "Retorno con mensaje de error.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 65,
+            "code": "    }",
+            "plain": "Cierra el bloque catch.",
+            "jury": "Fin del catch.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          },
+          {
+            "num": 66,
+            "code": "}",
+            "plain": "Cierra el método toggleEstado.",
+            "jury": "Fin de la función toggleEstado.",
+            "file": "app/Modules/Catalogo/Controllers/DestinoController.php"
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "q": "¿Por qué NO se utiliza una sentencia SQL DELETE para borrar destinos turísticos?",
+        "a": "Porque causaría un error de integridad referencial (Foreign Key) en PostgreSQL o dejaría huérfanos los tours, cotizaciones y reservas históricas que visitaron ese destino. En su lugar se utiliza 'Borrado Lógico' (activo = false)."
+      }
+    ]
+  }
+};
 
-    // ==========================================
-    // ESTADO DE LA APLICACIÓN
-    // ==========================================
     let currentRfKey = 'rf01';
     let currentFileIndex = 0;
     let currentCardIndex = 0;
@@ -754,11 +2266,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       renderRfTabs();
       loadRequirement(currentRfKey);
-
-      // Si es móvil pequeño, podemos iniciar en tarjetas o intercalado
-      if (window.innerWidth < 768) {
-        // Intercalado se lee genial en móvil también
-      }
     });
 
     function setViewMode(mode) {
@@ -845,20 +2352,30 @@
       const file = DATA[currentRfKey].files[currentFileIndex];
       const lines = filteredLines || file.lines;
 
+      document.getElementById('current-file-badge').textContent = file.name;
       document.getElementById('lines-count-text').textContent = `${lines.length} líneas explicadas`;
 
-      lines.forEach((item, index) => {
+      lines.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 sm:p-5 shadow-lg transition space-y-3';
 
+        // Si es línea vacía
+        const codeDisplay = item.code.trim() === '' ? '<span class="text-slate-600 italic">// Línea en blanco (separador visual)</span>' : escapeHtml(item.code);
+
         card.innerHTML = `
-          <!-- Cabecera de línea con código exacto -->
-          <div class="flex items-start gap-3">
-            <span class="bg-teal-500 text-slate-950 font-black text-xs px-2.5 py-1 rounded-lg shrink-0 mt-0.5">
-              Línea ${item.num}
-            </span>
+          <!-- Cabecera de línea con código exacto y ruta del archivo -->
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span class="flex items-center gap-1.5">
+                <span class="text-teal-400 font-bold">📁 Archivo:</span>
+                <span class="bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-slate-300">${item.file}</span>
+              </span>
+              <span class="bg-teal-500 text-slate-950 font-black text-xs px-2.5 py-0.5 rounded-lg shrink-0">
+                Línea ${item.num}
+              </span>
+            </div>
             <div class="bg-slate-950 border border-slate-800/80 rounded-xl px-3 py-2 text-xs sm:text-sm font-mono text-amber-300 w-full overflow-x-auto">
-              ${escapeHtml(item.code)}
+              ${codeDisplay}
             </div>
           </div>
 
@@ -894,8 +2411,9 @@
 
       document.getElementById('card-line-num').textContent = `Línea ${item.num}`;
       document.getElementById('card-file-name').textContent = file.name;
+      document.getElementById('card-file-path').textContent = `📁 Archivo: ${item.file}`;
       document.getElementById('card-counter').textContent = `${currentCardIndex + 1} de ${file.lines.length}`;
-      document.getElementById('card-code').textContent = item.code.trim();
+      document.getElementById('card-code').textContent = item.code.trim() === '' ? '// Línea en blanco (separador visual)' : item.code.trim();
       document.getElementById('card-plain').textContent = item.plain;
       document.getElementById('card-jury').textContent = `"${item.jury}"`;
       document.getElementById('card-progress').style.width = `${((currentCardIndex + 1) / file.lines.length) * 100}%`;
