@@ -64,6 +64,9 @@
 
     <!-- Navegación entre Módulos de la Aplicación -->
     <div class="flex flex-wrap gap-2">
+      <button onclick="setAppMode('mobile')" id="tab-app-mobile" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600">
+        📱 Modo Celular (Paso a Paso)
+      </button>
       <button onclick="setAppMode('code')" id="tab-app-code" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30">
         💻 Explorador de Código
       </button>
@@ -73,6 +76,9 @@
       <button onclick="setAppMode('glossary')" id="tab-app-glossary" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600">
         📖 Glosario para no programadores
       </button>
+      <a href="Guia_Estudio_RF01_al_RF05_Celular.pdf" download class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-900/30">
+        📥 Descargar Guía PDF
+      </a>
     </div>
   </header>
 
@@ -87,6 +93,60 @@
       <div class="text-xs text-slate-400 px-2 py-1 bg-slate-900/80 rounded-lg border border-slate-700 flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span>Haz click en cualquier línea de código para ver su explicación</span>
+      </div>
+    </div>
+
+    <!-- VISTA 0: MODO CELULAR PASO A PASO (TARJETA PARA EL PULGAR) -->
+    <div id="view-mobile" class="hidden space-y-4">
+      <div class="bg-slate-800 border-2 border-teal-500 rounded-2xl p-4 sm:p-6 shadow-2xl">
+        <!-- Selector rápido de archivo para móvil -->
+        <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1" id="mob-file-subtabs"></div>
+
+        <!-- Barra de progreso -->
+        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden mb-3 border border-slate-700">
+          <div id="mob-progress-bar" class="bg-teal-400 h-full transition-all duration-200" style="width: 10%;"></div>
+        </div>
+
+        <div class="flex items-center justify-between pb-2 border-b border-slate-700 mb-3">
+          <div class="flex items-center gap-2">
+            <span id="mob-line-badge" class="bg-teal-500 text-slate-950 font-black text-xs px-2.5 py-1 rounded-lg">Línea --</span>
+            <span id="mob-file-name" class="text-xs font-mono font-bold text-slate-300">Archivo</span>
+          </div>
+          <span id="mob-concept-tag" class="text-[11px] bg-slate-900 text-teal-300 font-mono px-2 py-0.5 rounded border border-slate-700">Concepto</span>
+        </div>
+
+        <!-- Código resaltado grande -->
+        <div class="bg-slate-950 rounded-xl p-3 sm:p-4 border border-slate-800 font-mono text-xs sm:text-sm text-amber-300 mb-4 overflow-x-auto leading-relaxed" id="mob-code-preview">
+          Código...
+        </div>
+
+        <!-- Explicación -->
+        <div class="space-y-3">
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-[11px] font-bold text-teal-400 uppercase tracking-wider mb-1">📌 ¿Qué hace en cristiano?</div>
+            <p id="mob-plain-text" class="text-xs sm:text-sm text-slate-200 leading-relaxed"></p>
+          </div>
+
+          <div class="bg-amber-950/20 p-3.5 rounded-xl border border-amber-900/40">
+            <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1">⚖️ Regla de Negocio / Seguridad</div>
+            <p id="mob-rule-text" class="text-xs text-slate-300 leading-relaxed"></p>
+          </div>
+
+          <div class="bg-emerald-950/30 p-3.5 rounded-xl border border-emerald-800/50">
+            <div class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1">🎤 Dilo así en tu sustentación</div>
+            <div id="mob-jury-text" class="text-xs sm:text-sm text-emerald-200 italic leading-relaxed"></div>
+          </div>
+        </div>
+
+        <!-- Botones Gigantes de Navegación para el Pulgar -->
+        <div class="grid grid-cols-2 gap-3 mt-5 pt-3 border-t border-slate-700">
+          <button onclick="selectPrevLine()" class="py-3 px-4 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white font-bold text-sm rounded-xl transition flex items-center justify-center gap-2 shadow-lg">
+            <span>⬅️</span> Anterior
+          </button>
+          <button onclick="selectNextLine()" class="py-3 px-4 bg-teal-600 hover:bg-teal-500 active:bg-teal-400 text-white font-bold text-sm rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-teal-900/40">
+            Siguiente <span>➡️</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -515,6 +575,11 @@
       renderGlossary();
       loadRequirement(currentRfKey);
 
+      // Si la pantalla es pequeña (celular), inicia en Modo Celular directamente
+      if (window.innerWidth < 768) {
+        setAppMode('mobile');
+      }
+
       window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown') {
           e.preventDefault();
@@ -527,14 +592,17 @@
     });
 
     function setAppMode(mode) {
+      document.getElementById('view-mobile').classList.toggle('hidden', mode !== 'mobile');
       document.getElementById('view-code').classList.toggle('hidden', mode !== 'code');
       document.getElementById('view-flashcards').classList.toggle('hidden', mode !== 'flashcards');
       document.getElementById('view-glossary').classList.toggle('hidden', mode !== 'glossary');
 
+      const btnMobile = document.getElementById('tab-app-mobile');
       const btnCode = document.getElementById('tab-app-code');
       const btnCards = document.getElementById('tab-app-flashcards');
       const btnGlossary = document.getElementById('tab-app-glossary');
 
+      btnMobile.className = mode === 'mobile' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
       btnCode.className = mode === 'code' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
       btnCards.className = mode === 'flashcards' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
       btnGlossary.className = mode === 'glossary' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
@@ -581,7 +649,9 @@
 
     function renderFileSubtabs() {
       const container = document.getElementById('file-subtabs-container');
+      const mobContainer = document.getElementById('mob-file-subtabs');
       container.innerHTML = '';
+      if (mobContainer) mobContainer.innerHTML = '';
       const rf = RF_DATA[currentRfKey];
 
       rf.files.forEach((file, index) => {
@@ -596,6 +666,12 @@
         btn.className = `px-3 py-1 rounded-lg text-xs font-mono font-bold transition ${isActive ? 'bg-teal-600 text-white shadow' : 'bg-slate-900 text-slate-400 hover:bg-slate-750'}`;
         btn.textContent = file.name;
         container.appendChild(btn);
+
+        if (mobContainer) {
+          const mobBtn = btn.cloneNode(true);
+          mobBtn.onclick = btn.onclick;
+          mobContainer.appendChild(mobBtn);
+        }
       });
 
       document.getElementById('current-file-badge').textContent = rf.files[currentFileIndex].path;
@@ -648,6 +724,18 @@
       document.getElementById('expl-rule-text').innerHTML = line.rule;
       document.getElementById('expl-jury-text').innerHTML = `"${line.jury}"`;
       document.getElementById('lines-counter-badge').textContent = `${index + 1} de ${file.lines.length} líneas analizadas`;
+
+      // Actualizar tarjeta para celular
+      if (document.getElementById('mob-line-badge')) {
+        document.getElementById('mob-line-badge').textContent = `Línea ${line.num} (${index + 1}/${file.lines.length})`;
+        document.getElementById('mob-file-name').textContent = file.name;
+        document.getElementById('mob-concept-tag').textContent = line.concept;
+        document.getElementById('mob-code-preview').textContent = line.code.trim();
+        document.getElementById('mob-plain-text').innerHTML = line.expl;
+        document.getElementById('mob-rule-text').innerHTML = line.rule;
+        document.getElementById('mob-jury-text').innerHTML = `"${line.jury}"`;
+        document.getElementById('mob-progress-bar').style.width = `${((index + 1) / file.lines.length) * 100}%`;
+      }
     }
 
     function selectNextLine() {

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Guía de Estudio de Bolsillo - RF01 al RF05 | 18 Experience</title>
+  <style>
+    @page {
+      margin: 15mm 12mm;
+      size: A4 portrait;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      line-height: 1.45;
+      font-size: 11pt;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+    }
+    .header {
+      border-bottom: 2px solid #0d9488;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      color: #0f766e;
+      font-size: 20pt;
+      margin: 0 0 4px 0;
+    }
+    .header p {
+      color: #64748b;
+      font-size: 10pt;
+      margin: 0;
+    }
+    .rf-card {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      margin-bottom: 22px;
+      page-break-inside: avoid;
+      overflow: hidden;
+    }
+    .rf-title {
+      background: #0f766e;
+      color: #ffffff;
+      padding: 10px 14px;
+      font-size: 13pt;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+    }
+    .rf-summary {
+      background: #f0fdfa;
+      border-bottom: 1px solid #ccfbf1;
+      padding: 10px 14px;
+      font-size: 10pt;
+      color: #134e4a;
+    }
+    .file-box {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .file-name {
+      font-size: 10.5pt;
+      font-weight: bold;
+      color: #334155;
+      font-family: monospace;
+      margin-bottom: 8px;
+      background: #f8fafc;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      border: 1px solid #e2e8f0;
+    }
+    .line-item {
+      margin-bottom: 12px;
+      padding-left: 10px;
+      border-left: 3px solid #14b8a6;
+    }
+    .code-snippet {
+      font-family: 'Consolas', monospace;
+      font-size: 9.5pt;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 5px;
+      margin: 4px 0 6px 0;
+      word-break: break-all;
+    }
+    .expl-box {
+      font-size: 10pt;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    .jury-box {
+      font-size: 9.5pt;
+      color: #065f46;
+      background: #ecfdf5;
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: 1px solid #a7f3d0;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .qa-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-top: 10px;
+      page-break-inside: avoid;
+    }
+    .qa-q {
+      font-weight: bold;
+      color: #92400e;
+      font-size: 10pt;
+      margin-bottom: 4px;
+    }
+    .qa-a {
+      font-size: 9.5pt;
+      color: #78350f;
+    }
+    .badge {
+      font-size: 8.5pt;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      color: #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>18 Experience Web • Guía de Sustentación</h1>
+    <p>Resumen de Estudio Línea por Línea (RF01 al RF05) • Ideal para repasar desde el celular</p>
+  </div>
+
+  <!-- RF01 -->
+  <div class="rf-card">
+    <div class="rf-title">
+      <span>RF01: Control de Acceso y Autenticación de Usuarios</span>
+      <span class="badge">Seguridad & Login</span>
+    </div>
+    <div class="rf-summary">
+      <strong>Propósito:</strong> Permite ingresar al sistema validando credenciales cifradas con Bcrypt, protegiendo contra bots mediante CAPTCHA, verificando estado activo de usuario, persona y rol, y renovando la sesión para evitar ataques.
+    </div>
+
+    <div class="file-box">
+      <div class="file-name">AuthController.php (Líneas 37-71)</div>
+      
+      <div class="line-item">
+        <strong>Líneas 39-47: Validación de Formulario Web</strong>
+        <div class="code-snippet">$request->validate(['usuario' => 'required', 'password' => 'required', 'captcha' => 'required']);</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Comprueba que ningún campo venga vacío antes de enviar consultas a la base de datos.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Aplicamos validación de entrada en el controlador para detener peticiones malformadas o vacías antes de tocar el modelo de datos."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Línea 50: Validación del CAPTCHA Anti-Bot</strong>
+        <div class="code-snippet">if (!$this->authService->validateCaptcha($request->input('captcha'))) { ... }</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Compara las letras escritas por el usuario contra el código secreto guardado en la sesión.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Cumplimos el CU01 implementando un CAPTCHA matemático/gráfico que neutraliza ataques automatizados de fuerza bruta y diccionarios."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Línea 63: Regeneración de Sesión</strong>
+        <div class="code-snippet">$request->session()->regenerate();</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Borra el código de cookie anterior y emite uno completamente nuevo en el navegador.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Es una medida de seguridad OWASP contra ataques de fijación de sesión (Session Fixation) para que nadie suplante la identidad del usuario."</div>
+      </div>
+    </div>
+
+    <div class="file-box">
+      <div class="file-name">AuthService.php (Líneas 56-89)</div>
+
+      <div class="line-item">
+        <strong>Líneas 58-60: Búsqueda con Eager Loading</strong>
+        <div class="code-snippet">$usuario = Usuario::with(['persona', 'rol'])->where('nombre_usuario', trim($username))->first();</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Busca al usuario en PostgreSQL y carga de un solo viaje a la persona física y a su rol.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Usamos Eager Loading con with() para resolver el problema de consultas N+1, trayendo la relación persona y rol en una sola ejecución optimizada."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Líneas 66-76: Verificación de Estados Activos</strong>
+        <div class="code-snippet">if (!$usuario->activo || !$usuario->persona->activo || !$usuario->rol->activo) { throw new Exception(...); }</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Triple candado: la cuenta debe estar activa, el trabajador no debe estar cesado, y el rol no debe estar inhabilitado.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Validamos la integridad humana y operativa: si un trabajador es dado de baja en RRHH, su acceso se revoca de inmediato aunque su cuenta esté creada."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Línea 78: Verificación Criptográfica</strong>
+        <div class="code-snippet">if (!$this->passwordService->verify($password, $usuario->password_hash)) { ... }</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Compara la clave ingresada contra el hash seguro Bcrypt almacenado en la base de datos.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Las contraseñas nunca se guardan legibles. Se verifican mediante funciones hash unidireccionales saladas con Bcrypt."</div>
+      </div>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-q">❓ Pregunta de Jurado: ¿Por qué no arrojan 'Usuario no existe' y en su lugar dicen 'Usuario o contraseña incorrectos'?</div>
+      <div class="qa-a">💡 <strong>Respuesta:</strong> Por directriz de seguridad informática OWASP: no revelar si un nombre de usuario existe o no previene la enumeración de usuarios por atacantes externos.</div>
+    </div>
+  </div>
+
+  <!-- RF02 -->
+  <div class="rf-card">
+    <div class="rf-title">
+      <span>RF02: Gestión de Personal y Cuentas de Usuario</span>
+      <span class="badge">Usuarios & Roles</span>
+    </div>
+    <div class="rf-summary">
+      <strong>Propósito:</strong> Permite a Gerencia crear trabajadores (GERENTE, COUNTER, CONTABILIDAD). Usa transacciones atómicas para no dejar registros huérfanos entre persona y usuario, y registra auditoría RN16.
+    </div>
+
+    <div class="file-box">
+      <div class="file-name">UsuarioController.php (Líneas 70-134)</div>
+
+      <div class="line-item">
+        <strong>Líneas 79-81: Validación de Roles y Longitud de Contraseña</strong>
+        <div class="code-snippet">'id_rol' => Rule::exists('rol')->whereIn('nombre', ROLES_PERSONAL), 'password' => 'min:8'</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Solo permite asignar roles administrativos y exige contraseñas de al menos 8 caracteres.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Restringimos a nivel de regla de validación que por esta vía solo se cree personal administrativo autorizado, garantizando políticas de contraseñas robustas."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Línea 85: Transacción Atómica (ACID)</strong>
+        <div class="code-snippet">DB::transaction(function () use ($validated) { ... });</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Si la persona se crea pero falla la creación del usuario o la auditoría, TODO se revierte (Rollback).</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Aplicamos DB::transaction() para asegurar atomicidad e integridad referencial en la base de datos PostgreSQL: o se guarda todo correctamente o no se guarda nada."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Línea 96: Reutilización de Personas</strong>
+        <div class="code-snippet">$persona = Persona::firstOrCreate(['tipo_documento' => ..., 'numero_documento' => ...], [...]);</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Si el DNI ya existía en la base de datos lo reutiliza; si no existía, crea el registro.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Usamos firstOrCreate para normalizar personas naturales y evitar duplicidad de entidades físicas en la base de datos."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Línea 120: Bitácora de Auditoría (RN16)</strong>
+        <div class="code-snippet">Auditoria::registrar(Auth::id(), 'CREAR_USUARIO', 'usuario', $usuario->id_usuario, ...);</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Guarda qué usuario ejecutó la acción, la fecha y la descripción, pero NUNCA guarda contraseñas.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Cumplimos la regla RN16 de trazabilidad corporativa: toda creación o cambio de perfil queda registrado con responsable y hora exacta."</div>
+      </div>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-q">❓ Pregunta de Jurado: ¿Quién tiene autorización para cambiar la contraseña de otro usuario?</div>
+      <div class="qa-a">💡 <strong>Respuesta:</strong> Exclusivamente el rol GERENTE mediante el CU05. La clave anterior se invalida inmediatamente y el cambio queda registrado en la auditoría sin exponer el texto del secreto.</div>
+    </div>
+  </div>
+
+  <!-- RF03 -->
+  <div class="rf-card">
+    <div class="rf-title">
+      <span>RF03: Panel de Control y Resumen Operativo</span>
+      <span class="badge">KPIs & Analítica</span>
+    </div>
+    <div class="rf-summary">
+      <strong>Propósito:</strong> Ofrece a Gerencia y Counter la información del día en tiempo real: reservas de hoy, salidas de tours, pagos pendientes por validar, dinero neto recaudado y próximas salidas con vista SQL.
+    </div>
+
+    <div class="file-box">
+      <div class="file-name">DashboardController.php (Líneas 10-53)</div>
+
+      <div class="line-item">
+        <strong>Líneas 12-14: Desvío de Clientes</strong>
+        <div class="code-snippet">if (auth()->user()->tieneRol('CLIENTE')) { return redirect()->route('portal.dashboard'); }</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Si un cliente entra al sistema, no ve finanzas ni salidas de la agencia, sino su propio panel de pasajero.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Control de acceso basado en roles (RBAC): segregamos la vista gerencial/operativa del portal de autoservicio del cliente."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Líneas 33-35: Recaudación Neta Real</strong>
+        <div class="code-snippet">$totalRecaudado = DB::table('pago')->where('estado', 'VALIDADO')->sum(DB::raw('monto_base - monto_base_devuelto'));</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Suma los pagos reales cobrados y descuenta los reembolsos por cancelaciones.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Calculamos el saldo neto real en caja restando las devoluciones aprobadas, ofreciendo información financiera fidedigna."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Líneas 38-44: Consulta a Vista SQL Especializada</strong>
+        <div class="code-snippet">DB::table('vw_disponibilidad_salida')->whereDate('fecha', '>=', $hoy)->limit(5)->get();</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Pide a PostgreSQL las próximas salidas usando la vista que ya calculó cupos ocupados y disponibles.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Aprovechamos las vistas en PostgreSQL (vw_disponibilidad_salida) para delegar los cálculos pesados de cupos al motor relacional, optimizando la respuesta web."</div>
+      </div>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-q">❓ Pregunta de Jurado: ¿Por qué separan pagos pendientes de pagos validados en el Dashboard?</div>
+      <div class="qa-a">💡 <strong>Respuesta:</strong> Porque los pagos pendientes son transferencias o vouchers subidos por los clientes que requieren conciliación contable. Sirve como bandeja de trabajo pendiente para Contabilidad.</div>
+    </div>
+  </div>
+
+  <!-- RF04 -->
+  <div class="rf-card">
+    <div class="rf-title">
+      <span>RF04: Gestión de Clientes y Ficha Integral</span>
+      <span class="badge">Clientes & RN02</span>
+    </div>
+    <div class="rf-summary">
+      <strong>Propósito:</strong> Registra clientes (directos o corporativos), valida documentos legales peruanos (DNI 8 dígitos, RUC 11), evita duplicados (Regla RN02) y consulta cotizaciones y reservas asociadas.
+    </div>
+
+    <div class="file-box">
+      <div class="file-name">ClienteService.php (Líneas 99-139)</div>
+
+      <div class="line-item">
+        <strong>Línea 102: Validación Oficial de Documento</strong>
+        <div class="code-snippet">$this->validador->validar($datosPersona);</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Valida que un DNI tenga exactamente 8 dígitos y que un RUC tenga 11 dígitos numéricos válidos.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Garantizamos calidad de datos desde el origen aplicando validadores específicos de identificación peruana."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Líneas 114-117: Regla de Negocio RN02 (Unicidad de Cliente)</strong>
+        <div class="code-snippet">if ($personaExistente && Cliente::where('id_persona', $personaExistente->id_persona)->exists()) { throw new InvalidArgumentException('La persona ya está registrada como cliente.'); }</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Impide que una persona sea registrada dos veces como cliente con el mismo DNI.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Implementamos rigurosamente la regla RN02 del SRS: una persona natural solo puede poseer un expediente de cliente en la base de datos."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Línea 119: Promoción de Pasajero a Cliente</strong>
+        <div class="code-snippet">$persona = $this->obtenerOCrearPersona($datosPersona);</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Si la persona ya viajó antes como acompañante, se reutiliza su registro de persona sin duplicarlo.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "El sistema normaliza la entidad Persona: un acompañante de viaje puede ser promovido a Cliente titular manteniendo su historial sin redundancia de datos."</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RF05 -->
+  <div class="rf-card">
+    <div class="rf-title">
+      <span>RF05: Catálogo de Destinos Turísticos</span>
+      <span class="badge">Catálogo & Soft-State</span>
+    </div>
+    <div class="rf-summary">
+      <strong>Propósito:</strong> Gestiona los destinos de la agencia en Tacna (Miculla, Calientes, Tarata, etc.). Controla altitudes (msnm), recomendaciones, y aplica borrado lógico (activo = false) para proteger reservas pasadas.
+    </div>
+
+    <div class="file-box">
+      <div class="file-name">CatalogoService.php (Líneas 37-64 y 96-100)</div>
+
+      <div class="line-item">
+        <strong>Líneas 44-46: Control de Nombres Duplicados</strong>
+        <div class="code-snippet">if (Destino::where('nombre', $nombre)->exists()) { throw new InvalidArgumentException('Ya existe un destino con ese nombre.'); }</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> Evita registrar dos destinos con el mismo nombre para que no haya confusiones al cotizar.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Validamos la unicidad del nombre del destino a nivel de servicio y base de datos para asegurar un catálogo consistente."</div>
+      </div>
+
+      <div class="line-item">
+        <strong>Líneas 96-100: Borrado Lógico (Soft State)</strong>
+        <div class="code-snippet">$destino->activo = $activo; $destino->save();</div>
+        <div class="expl-box">📌 <strong>¿Qué hace?</strong> En lugar de usar DELETE de SQL, solo cambia el campo activo a false.</div>
+        <div class="jury-box">🎤 <strong>Dilo al jurado:</strong> "Aplicamos Borrado Lógico (Soft Delete): no usamos DELETE en SQL para no violar claves foráneas ni destruir el histórico contable y turístico de tours ya realizados."</div>
+      </div>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-q">❓ Pregunta de Jurado: ¿Qué pasa con las cotizaciones antiguas si un destino se desactiva?</div>
+      <div class="qa-a">💡 <strong>Respuesta:</strong> Siguen funcionando y mostrando la información completa porque el registro sigue existiendo en PostgreSQL. Simplemente el destino deja de aparecer en los combos desplegables para nuevas ventas.</div>
+    </div>
+  </div>
+
+</body>
+</html>
