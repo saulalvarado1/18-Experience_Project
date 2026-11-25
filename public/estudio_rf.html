@@ -51,6 +51,7 @@
 </head>
 <body class="p-3 sm:p-6 min-h-screen">
 
+  <!-- HEADER -->
   <header class="max-w-7xl mx-auto mb-6 bg-slate-800/80 backdrop-blur border border-slate-700 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
     <div>
       <div class="flex items-center gap-3">
@@ -61,7 +62,11 @@
       <p class="text-slate-400 text-sm mt-0.5">Aprende qué significa cada línea de código de los requerimientos 1 al 5 y cómo explicárselo al jurado.</p>
     </div>
 
+    <!-- Navegación entre Módulos de la Aplicación -->
     <div class="flex flex-wrap gap-2">
+      <button onclick="setAppMode('mobile')" id="tab-app-mobile" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600">
+        📱 Modo Celular (Paso a Paso)
+      </button>
       <button onclick="setAppMode('code')" id="tab-app-code" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30">
         💻 Explorador de Código
       </button>
@@ -71,26 +76,99 @@
       <button onclick="setAppMode('glossary')" id="tab-app-glossary" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600">
         📖 Glosario para no programadores
       </button>
+      <a href="Guia_Estudio_RF01_al_RF05_Celular.pdf" download class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-900/30">
+        📥 Descargar Guía PDF
+      </a>
     </div>
   </header>
 
+  <!-- CONTENIDO PRINCIPAL -->
   <main class="max-w-7xl mx-auto">
+
+    <!-- SECCIÓN 1: SELECTOR DE REQUERIMIENTOS (RF01 - RF05) -->
     <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-3 mb-5 flex flex-wrap gap-2 items-center justify-between">
-      <div class="flex flex-wrap gap-2" id="rf-buttons-container"></div>
+      <div class="flex flex-wrap gap-2" id="rf-buttons-container">
+        <!-- Generado dinámicamente -->
+      </div>
       <div class="text-xs text-slate-400 px-2 py-1 bg-slate-900/80 rounded-lg border border-slate-700 flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span>Haz click en cualquier línea de código para ver su explicación</span>
       </div>
     </div>
 
-    <div id="view-code" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-      <div class="lg:col-span-7 bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
-        <div class="bg-slate-800/90 px-4 py-2.5 border-b border-slate-700 flex items-center justify-between gap-3 overflow-x-auto">
-          <div class="flex items-center gap-2" id="file-subtabs-container"></div>
-          <span id="current-file-badge" class="text-[11px] font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800 shrink-0">Path del archivo</span>
+    <!-- VISTA 0: MODO CELULAR PASO A PASO (TARJETA PARA EL PULGAR) -->
+    <div id="view-mobile" class="hidden space-y-4">
+      <div class="bg-slate-800 border-2 border-teal-500 rounded-2xl p-4 sm:p-6 shadow-2xl">
+        <!-- Selector rápido de archivo para móvil -->
+        <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1" id="mob-file-subtabs"></div>
+
+        <!-- Barra de progreso -->
+        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden mb-3 border border-slate-700">
+          <div id="mob-progress-bar" class="bg-teal-400 h-full transition-all duration-200" style="width: 10%;"></div>
         </div>
 
-        <div class="overflow-y-auto max-h-[640px] code-container bg-[#0b1120] text-slate-200 select-none py-2" id="code-lines-container"></div>
+        <div class="flex items-center justify-between pb-2 border-b border-slate-700 mb-3">
+          <div class="flex items-center gap-2">
+            <span id="mob-line-badge" class="bg-teal-500 text-slate-950 font-black text-xs px-2.5 py-1 rounded-lg">Línea --</span>
+            <span id="mob-file-name" class="text-xs font-mono font-bold text-slate-300">Archivo</span>
+          </div>
+          <span id="mob-concept-tag" class="text-[11px] bg-slate-900 text-teal-300 font-mono px-2 py-0.5 rounded border border-slate-700">Concepto</span>
+        </div>
+
+        <!-- Código resaltado grande -->
+        <div class="bg-slate-950 rounded-xl p-3 sm:p-4 border border-slate-800 font-mono text-xs sm:text-sm text-amber-300 mb-4 overflow-x-auto leading-relaxed" id="mob-code-preview">
+          Código...
+        </div>
+
+        <!-- Explicación -->
+        <div class="space-y-3">
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+            <div class="text-[11px] font-bold text-teal-400 uppercase tracking-wider mb-1">📌 ¿Qué hace en cristiano?</div>
+            <p id="mob-plain-text" class="text-xs sm:text-sm text-slate-200 leading-relaxed"></p>
+          </div>
+
+          <div class="bg-amber-950/20 p-3.5 rounded-xl border border-amber-900/40">
+            <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1">⚖️ Regla de Negocio / Seguridad</div>
+            <p id="mob-rule-text" class="text-xs text-slate-300 leading-relaxed"></p>
+          </div>
+
+          <div class="bg-emerald-950/30 p-3.5 rounded-xl border border-emerald-800/50">
+            <div class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1">🎤 Dilo así en tu sustentación</div>
+            <div id="mob-jury-text" class="text-xs sm:text-sm text-emerald-200 italic leading-relaxed"></div>
+          </div>
+        </div>
+
+        <!-- Botones Gigantes de Navegación para el Pulgar -->
+        <div class="grid grid-cols-2 gap-3 mt-5 pt-3 border-t border-slate-700">
+          <button onclick="selectPrevLine()" class="py-3 px-4 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white font-bold text-sm rounded-xl transition flex items-center justify-center gap-2 shadow-lg">
+            <span>⬅️</span> Anterior
+          </button>
+          <button onclick="selectNextLine()" class="py-3 px-4 bg-teal-600 hover:bg-teal-500 active:bg-teal-400 text-white font-bold text-sm rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-teal-900/40">
+            Siguiente <span>➡️</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA 1: EXPLORADOR DE CÓDIGO (SPLIT SCREEN: CÓDIGO A LA IZQUIERDA, EXPLICACIÓN A LA DERECHA) -->
+    <div id="view-code" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      
+      <!-- COLUMNA IZQUIERDA: VISOR DE CÓDIGO (7 cols) -->
+      <div class="lg:col-span-7 bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+        <!-- Sub-pestañas de archivo (si el RF tiene Controller y Service) -->
+        <div class="bg-slate-800/90 px-4 py-2.5 border-b border-slate-700 flex items-center justify-between gap-3 overflow-x-auto">
+          <div class="flex items-center gap-2" id="file-subtabs-container">
+            <!-- Botones de archivo dinámicos -->
+          </div>
+          <span id="current-file-badge" class="text-[11px] font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800 shrink-0">
+            Path del archivo
+          </span>
+        </div>
+
+        <!-- Líneas de código -->
+        <div class="overflow-y-auto max-h-[640px] code-container bg-[#0b1120] text-slate-200 select-none py-2" id="code-lines-container">
+          <!-- Líneas inyectadas por JS -->
+        </div>
 
         <div class="bg-slate-800/60 px-4 py-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between items-center">
           <span>💡 Tip: Usa las flechas ⬆️ / ⬇️ de tu teclado para moverte entre líneas</span>
@@ -98,7 +176,10 @@
         </div>
       </div>
 
+      <!-- COLUMNA DERECHA: EXPLICADOR DETALLADO (5 cols) -->
       <div class="lg:col-span-5 flex flex-col gap-4 sticky top-4">
+        
+        <!-- Tarjeta de Explicación de la Línea -->
         <div class="bg-slate-850 bg-slate-800 border-2 border-teal-500/50 rounded-2xl p-5 shadow-2xl">
           <div class="flex items-center justify-between pb-3 border-b border-slate-700 mb-4">
             <div class="flex items-center gap-2">
@@ -108,10 +189,12 @@
             <span id="expl-concept-tag" class="text-[11px] bg-slate-700 text-teal-300 font-mono px-2 py-0.5 rounded border border-slate-600">Concepto</span>
           </div>
 
+          <!-- Código resaltado actual -->
           <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 font-mono text-xs text-amber-300 mb-4 overflow-x-auto" id="expl-code-preview">
             Selecciona una línea de código a la izquierda...
           </div>
 
+          <!-- Explicación en lenguaje sencillo -->
           <div class="space-y-3.5">
             <div>
               <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
@@ -122,51 +205,75 @@
               </p>
             </div>
 
+            <!-- Por qué se hizo así / Regla de negocio -->
             <div>
               <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                 <span>⚖️</span> Regla de Negocio o Seguridad (Por qué existe)
               </h3>
-              <p id="expl-rule-text" class="text-xs text-slate-300 leading-relaxed bg-amber-950/20 p-3 rounded-xl border border-amber-900/30">--</p>
+              <p id="expl-rule-text" class="text-xs text-slate-300 leading-relaxed bg-amber-950/20 p-3 rounded-xl border border-amber-900/30">
+                --
+              </p>
             </div>
 
+            <!-- Qué responder si el profesor te pregunta -->
             <div>
               <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                 <span>🎤</span> Cómo decirlo en tu sustentación frente al jurado
               </h3>
-              <div id="expl-jury-text" class="text-xs text-emerald-200/90 leading-relaxed bg-emerald-950/30 p-3 rounded-xl border border-emerald-800/40 italic">--</div>
+              <div id="expl-jury-text" class="text-xs text-emerald-200/90 leading-relaxed bg-emerald-950/30 p-3 rounded-xl border border-emerald-800/40 italic">
+                --
+              </div>
             </div>
           </div>
         </div>
 
+        <!-- Mini resumen del requerimiento completo -->
         <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
           <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
             <span>📋</span> Resumen Ejecutivo del Requerimiento
           </h4>
-          <p id="rf-summary-box" class="text-xs text-slate-300 leading-relaxed">Cargando resumen...</p>
+          <p id="rf-summary-box" class="text-xs text-slate-300 leading-relaxed">
+            Cargando resumen...
+          </p>
         </div>
+
       </div>
+
     </div>
 
+    <!-- VISTA 2: PREGUNTAS DE JURADO (FLASHCARDS INTERACTIVAS) -->
     <div id="view-flashcards" class="hidden space-y-6">
       <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 class="text-xl font-bold text-white flex items-center gap-2"><span>🎓</span> Banco de Preguntas Típicas de Examen y Sustentación</h2>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <span>🎓</span> Banco de Preguntas Típicas de Examen y Sustentación
+          </h2>
           <p class="text-slate-400 text-xs mt-1">Preguntas reales que un docente de ingeniería de software o base de datos te haría sobre este requerimiento.</p>
         </div>
         <div class="text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700">
           Requerimiento actual: <span id="flashcard-rf-title" class="text-teal-400 font-bold">RF01</span>
         </div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="flashcards-grid"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="flashcards-grid">
+        <!-- Tarjetas inyectadas por JS -->
+      </div>
     </div>
 
+    <!-- VISTA 3: GLOSARIO DE TÉRMINOS PARA NO PROGRAMADORES -->
     <div id="view-glossary" class="hidden space-y-6">
       <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
-        <h2 class="text-xl font-bold text-white flex items-center gap-2"><span>📖</span> Diccionario de Símbolos y Palabras Raras de PHP</h2>
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span>📖</span> Diccionario de Símbolos y Palabras Raras de PHP
+        </h2>
         <p class="text-slate-400 text-xs mt-1">¿Ves símbolos como <code>-></code>, <code>::</code> o <code>$</code> y no sabes qué son? Aquí están explicados en lenguaje de la vida real para que nunca te agarren desprevenido.</p>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="glossary-grid"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="glossary-grid">
+        <!-- Glosario inyectado por JS -->
+      </div>
     </div>
+
   </main>
 
   <footer class="max-w-7xl mx-auto mt-10 text-center text-xs text-slate-500 py-6 border-t border-slate-800">
@@ -174,13 +281,21 @@
   </footer>
 
   <script>
+    // ==========================================
+    // BASE DE CONOCIMIENTO DE LOS REQUERIMIENTOS 1 AL 5
+    // ==========================================
     const RF_DATA = {
       rf01: {
-        id: "rf01", code: "RF01", title: "RF01: Control de Acceso y Autenticación", badge: "Seguridad y Login",
+        id: "rf01",
+        code: "RF01",
+        title: "RF01: Control de Acceso y Autenticación",
+        badge: "Seguridad y Login",
         summary: "Permite a los usuarios ingresar al sistema validando credenciales cifradas (Bcrypt), protegiendo contra bots mediante CAPTCHA, verificando que usuario, personal y rol estén activos, y renovando la sesión para evitar suplantaciones.",
         files: [
           {
-            name: "AuthController.php", label: "Controlador (Petición Web)", path: "app/Modules/Seguridad/Controllers/AuthController.php",
+            name: "AuthController.php",
+            label: "Controlador (Petición Web)",
+            path: "app/Modules/Seguridad/Controllers/AuthController.php",
             lines: [
               { num: 37, code: "public function login(Request $request)", concept: "Controlador HTTP", expl: "Es la puerta de entrada cuando el usuario hace clic en el botón 'Iniciar Sesión'. El objeto $request contiene lo que el usuario escribió.", rule: "Recibe los datos del formulario web.", jury: "Aquí inicia el flujo del CU01; el controlador recibe la petición y delega la validación." },
               { num: 39, code: "    $request->validate([", concept: "Validación de Formulario", expl: "Verifica que ningún campo obligatorio venga vacío antes de hacer consultas a la base de datos.", rule: "RN: Campos obligatorios usuario, contraseña y captcha.", jury: "Previene enviar datos vacíos o tipos de datos maliciosos al servidor." },
@@ -200,7 +315,9 @@
             ]
           },
           {
-            name: "AuthService.php", label: "Servicio de Negocio (Lógica y BD)", path: "app/Modules/Seguridad/Services/AuthService.php",
+            name: "AuthService.php",
+            label: "Servicio de Negocio (Lógica y BD)",
+            path: "app/Modules/Seguridad/Services/AuthService.php",
             lines: [
               { num: 56, code: "public function authenticate(string $username, string $password): Usuario", concept: "Método de Dominio", expl: "Recibe el usuario y password, y promete devolver el modelo Usuario autenticado.", rule: "Regla de negocio central del CU01.", jury: "Concentra todas las validaciones de acceso al sistema." },
               { num: 58, code: "    $usuario = Usuario::with(['persona', 'rol'])", concept: "Eager Loading (Optimización)", expl: "Busca en la tabla 'usuario' y al mismo tiempo trae en una sola consulta a la persona física y a su rol.", rule: "Rendimiento: Evita el problema de consultas N+1.", jury: "Utilizamos Eager Loading para consultar en una sola ejecución las relaciones persona y rol." },
@@ -226,11 +343,16 @@
       },
 
       rf02: {
-        id: "rf02", code: "RF02", title: "RF02: Gestión de Personal y Cuentas", badge: "Usuarios y Roles",
+        id: "rf02",
+        code: "RF02",
+        title: "RF02: Gestión de Personal y Cuentas",
+        badge: "Usuarios y Roles",
         summary: "Permite a Gerencia crear y administrar las cuentas del personal operativo (GERENTE, COUNTER, CONTABILIDAD). Aplica transacciones atómicas de base de datos para no dejar registros huérfanos entre persona y usuario, y registra auditoría RN16.",
         files: [
           {
-            name: "UsuarioController.php", label: "Controlador (store)", path: "app/Modules/Seguridad/Controllers/UsuarioController.php",
+            name: "UsuarioController.php",
+            label: "Controlador (store)",
+            path: "app/Modules/Seguridad/Controllers/UsuarioController.php",
             lines: [
               { num: 70, code: "public function store(Request $request)", concept: "Controlador de Guardado", expl: "Recibe los datos del formulario de nuevo trabajador y cuenta de usuario.", rule: "CU04: Registrar nuevo usuario del personal.", jury: "Método para procesar la creación de cuentas de personal administrativo." },
               { num: 72, code: "    $validated = $request->validate([", concept: "Validaciones Estrictas", expl: "Aplica reglas de negocio sobre los datos enviados antes de procesarlos.", rule: "Validación de entrada de datos.", jury: "Filtra que el documento, rol y contraseñas cumplan los estándares." },
@@ -246,7 +368,9 @@
             ]
           },
           {
-            name: "UsuarioService.php", label: "Servicio (Cambio de Clave)", path: "app/Modules/Seguridad/Services/UsuarioService.php",
+            name: "UsuarioService.php",
+            label: "Servicio (Cambio de Clave)",
+            path: "app/Modules/Seguridad/Services/UsuarioService.php",
             lines: [
               { num: 122, code: "public function cambiarContrasena(int $idUsuario, string $nueva, string $confirmacion, int $idGerente): Usuario", concept: "Caso de Uso CU05", expl: "Función exclusiva para que Gerencia cambie la clave de un trabajador si este la olvidó.", rule: "CU05: Cambio de contraseña por Gerencia.", jury: "Solo usuarios con rol GERENTE pueden invocar esta función." },
               { num: 127, code: "    if ($nueva !== $confirmacion) {", concept: "Validación de Coincidencia", expl: "Verifica que la nueva contraseña y su repetición sean exactamente idénticas.", rule: "Evitar errores tipográficos.", jury: "Valida la confirmación de la contraseña antes de cambiarla." },
@@ -264,11 +388,16 @@
       },
 
       rf03: {
-        id: "rf03", code: "RF03", title: "RF03: Resumen Operativo (Dashboard)", badge: "KPIs y Analítica",
+        id: "rf03",
+        code: "RF03",
+        title: "RF03: Resumen Operativo (Dashboard)",
+        badge: "KPIs y Analítica",
         summary: "Proporciona a Gerencia y Counter un panel de mando en tiempo real con los indicadores operativos del día: reservas activas, salidas programadas, pagos pendientes de validación, recaudación neta y próximas salidas usando una vista SQL optimizada.",
         files: [
           {
-            name: "DashboardController.php", label: "Controlador del Dashboard", path: "app/Modules/Seguridad/Controllers/DashboardController.php",
+            name: "DashboardController.php",
+            label: "Controlador del Dashboard",
+            path: "app/Modules/Seguridad/Controllers/DashboardController.php",
             lines: [
               { num: 10, code: "public function index()", concept: "Panel Principal", expl: "Punto de entrada al Dashboard cuando el personal inicia sesión.", rule: "CU02: Consultar resumen operativo del día.", jury: "Carga todos los indicadores clave de rendimiento (KPIs) del día." },
               { num: 12, code: "    if (auth()->check() && auth()->user()->tieneRol('CLIENTE')) {", concept: "Control de Acceso por Rol", expl: "Verifica si el usuario conectado es un cliente común.", rule: "Separación de interfaces: El cliente no ve finanzas internas.", jury: "Si es cliente, lo redirige a su portal personal de pasajero." },
@@ -292,11 +421,16 @@
       },
 
       rf04: {
-        id: "rf04", code: "RF04", title: "RF04: Gestión de Clientes", badge: "Clientes y Regla RN02",
+        id: "rf04",
+        code: "RF04",
+        title: "RF04: Gestión de Clientes",
+        badge: "Clientes y Regla RN02",
         summary: "Administra el registro y ficha de clientes directos o corporativos. Valida documentos oficiales peruanos (DNI 8 dígitos, RUC 11 dígitos), evita que una persona física se duplique como cliente (Regla RN02) y permite consultar su historial integral.",
         files: [
           {
-            name: "ClienteService.php", label: "Servicio de Clientes (registrar)", path: "app/Modules/Clientes/Services/ClienteService.php",
+            name: "ClienteService.php",
+            label: "Servicio de Clientes (registrar)",
+            path: "app/Modules/Clientes/Services/ClienteService.php",
             lines: [
               { num: 99, code: "public function registrar(array $datosPersona, string $tipoCliente, int $idUsuario): Cliente", concept: "Método de Registro", expl: "Recibe los datos personales del cliente, el tipo ('DIRECTO' o 'CORPORATIVO') y quién lo atiende.", rule: "CU08: Registrar nuevo cliente.", jury: "Método del servicio para dar de alta a un cliente en el sistema." },
               { num: 102, code: "    $this->validador->validar($datosPersona);", concept: "Validador de Formatos", expl: "Comprueba que los nombres no tengan símbolos raros y que el DNI tenga 8 números exactos.", rule: "RN: Formato y validez de identidad.", jury: "Aplica las reglas de validación documental." },
@@ -311,7 +445,9 @@
             ]
           },
           {
-            name: "ClienteController.php", label: "Controlador (store y vista)", path: "app/Modules/Clientes/Controllers/ClienteController.php",
+            name: "ClienteController.php",
+            label: "Controlador (store y vista)",
+            path: "app/Modules/Clientes/Controllers/ClienteController.php",
             lines: [
               { num: 29, code: "public function store(Request $request)", concept: "Receptor HTTP", expl: "Recibe los datos enviados desde la ventana modal o formulario de clientes.", rule: "Flujo web de clientes.", jury: "Controlador que orquesta la solicitud HTTP de alta de clientes." },
               { num: 46, code: "    $this->clienteService->registrar($datosPersona, $tipoCliente, Auth::id());", concept: "Invocación de Servicio", expl: "Pasa los datos al servicio y le envía el ID del usuario actualmente conectado (Auth::id()).", rule: "Delegación a capa de servicio.", jury: "Mantiene el controlador ligero delegando toda la lógica al servicio." },
@@ -329,11 +465,16 @@
       },
 
       rf05: {
-        id: "rf05", code: "RF05", title: "RF05: Catálogo de Destinos Turísticos", badge: "Catálogo y Soft-State",
+        id: "rf05",
+        code: "RF05",
+        title: "RF05: Catálogo de Destinos Turísticos",
+        badge: "Catálogo y Soft-State",
         summary: "Permite gestionar los destinos turísticos ofrecidos en Tacna y el sur del Perú (Miculla, Calientes, Tarata, etc.). Valida la no duplicidad de nombres y aplica borrado lógico (Soft-State / activo = false) para no romper reservas históricas.",
         files: [
           {
-            name: "CatalogoService.php", label: "Servicio de Catálogo (crear y toggle)", path: "app/Modules/Catalogo/Services/CatalogoService.php",
+            name: "CatalogoService.php",
+            label: "Servicio de Catálogo (crear y toggle)",
+            path: "app/Modules/Catalogo/Services/CatalogoService.php",
             lines: [
               { num: 37, code: "public function crearDestino(array $datos, int $idUsuario): Destino", concept: "Creación de Destino", expl: "Método que procesa la creación de un nuevo lugar turístico para la agencia.", rule: "CU10: Registrar destino turístico.", jury: "Servicio encargado de la lógica de catálogo para destinos." },
               { num: 39, code: "    $nombre = trim($datos['nombre'] ?? '');", concept: "Sanitización", expl: "Limpia espacios en blanco accidentales del nombre del destino.", rule: "Evitar nombres vacíos o con espacios falsos.", jury: "Sanitiza la entrada del nombre." },
@@ -348,7 +489,9 @@
             ]
           },
           {
-            name: "DestinoController.php", label: "Controlador (toggleEstado)", path: "app/Modules/Catalogo/Controllers/DestinoController.php",
+            name: "DestinoController.php",
+            label: "Controlador (toggleEstado)",
+            path: "app/Modules/Catalogo/Controllers/DestinoController.php",
             lines: [
               { num: 53, code: "public function toggleEstado(int $id)", concept: "Alternador de Estado", expl: "Función rápida para activar o desactivar un destino con un solo clic.", rule: "CU10: Habilitar/Deshabilitar destino.", jury: "Acción del controlador para alternar el estado del destino." },
               { num: 56, code: "    $destino = Destino::findOrFail($id);", concept: "Lectura de Estado Actual", expl: "Obtiene el destino para saber si estaba prendido o apagado.", rule: "Consultar estado vigente.", jury: "Verifica el estado actual del registro." },
@@ -367,15 +510,60 @@
     };
 
     const GLOSSARY = [
-      { sym: "$variable", name: "Signo de Dólar ($)", desc: "En PHP, TODA cajita que guarda un dato comienza con un signo de dólar. Por ejemplo: <code>$usuario</code> guarda la información del usuario, <code>$hoy</code> guarda la fecha.", example: "$hoy = '2026-11-25';" },
-      { sym: "->", name: "Flecha Simple (->)", desc: "Significa 'acceder a una propiedad o pedirle una acción a un objeto'. Piensa en un carro: <code>$carro->frenar()</code> o <code>$usuario->nombre</code>.", example: "$usuario->nombre_usuario" },
-      { sym: "::", name: "Doble Dos Puntos (::)", desc: "Llamada estática. Se usa cuando le pides ayuda directa a una clase sin necesidad de crear una copia antes. Ejemplo: <code>DB::transaction()</code> o <code>Hash::make()</code>.", example: "Hash::make('secreto123')" },
-      { sym: "=>", name: "Flecha Doble (=>)", desc: "Se usa en los diccionarios o arreglos asociativos para decir 'esta etiqueta TIENE este valor'. Por ejemplo: <code>'nombre' => 'Miculla'</code>.", example: "['nombre' => 'Saul', 'rol' => 'Gerente']" },
-      { sym: "try { } catch { }", name: "Bloque Try - Catch (Trata y Atrapa)", desc: "Es el cinturón de seguridad del sistema. En el <code>try</code> el sistema intenta hacer una acción; si algo sale mal, el <code>catch</code> atrapa el error y muestra un mensaje limpio en vez de que la pantalla se ponga blanca.", example: "try { ... } catch (\\Exception $e) { ... }" },
-      { sym: "DB::transaction()", name: "Transacción Atómica de Base de Datos", desc: "Garantiza que un grupo de operaciones se cumpla al 100% o no se guarde nada. Si tienes que guardar a una persona, su usuario y su auditoría, y la auditoría falla, la transacción borra a la persona y al usuario automáticamente (Rollback).", example: "DB::transaction(function() { ... });" },
-      { sym: "firstOrCreate()", name: "Busca Primero o Crea Nuevo", desc: "Comprueba si un registro ya existe en la base de datos. Si ya estaba registrado, lo carga en memoria; si no existía, lo crea en ese instante. Evita duplicados.", example: "Persona::firstOrCreate(['dni' => '12345678']);" },
-      { sym: "lockForUpdate()", name: "Bloqueo Pesimista de Concurrencia", desc: "Le pone candado a una fila de la base de datos durante milisegundos para que dos personas usando el sistema al mismo tiempo no modifiquen o vendan el mismo cupo a la vez.", example: "Salida::whereKey($id)->lockForUpdate()->first();" },
-      { sym: "with(['relacion'])", name: "Eager Loading (Carga Anticipada)", desc: "Optimización de consultas SQL. En vez de hacer 50 preguntas a la base de datos una por una (problema N+1), pide de una sola vez la tabla principal junto con sus tablas hijas.", example: "Usuario::with(['persona', 'rol'])->first();" }
+      {
+        sym: "$variable",
+        name: "Signo de Dólar ($)",
+        desc: "En PHP, TODA cajita que guarda un dato comienza con un signo de dólar. Por ejemplo: <code>$usuario</code> guarda la información del usuario, <code>$hoy</code> guarda la fecha.",
+        example: "$hoy = '2026-11-25';"
+      },
+      {
+        sym: "->",
+        name: "Flecha Simple (->)",
+        desc: "Significa 'acceder a una propiedad o pedirle una acción a un objeto'. Piensa en un carro: <code>$carro->frenar()</code> o <code>$usuario->nombre</code>.",
+        example: "$usuario->nombre_usuario"
+      },
+      {
+        sym: "::",
+        name: "Doble Dos Puntos (::)",
+        desc: "Llamada estática. Se usa cuando le pides ayuda directa a una clase sin necesidad de crear una copia antes. Ejemplo: <code>DB::transaction()</code> o <code>Hash::make()</code>.",
+        example: "Hash::make('secreto123')"
+      },
+      {
+        sym: "=>",
+        name: "Flecha Doble (=>)",
+        desc: "Se usa en los diccionarios o arreglos asociativos para decir 'esta etiqueta TIENE este valor'. Por ejemplo: <code>'nombre' => 'Miculla'</code>.",
+        example: "['nombre' => 'Saul', 'rol' => 'Gerente']"
+      },
+      {
+        sym: "try { } catch { }",
+        name: "Bloque Try - Catch (Trata y Atrapa)",
+        desc: "Es el cinturón de seguridad del sistema. En el <code>try</code> el sistema intenta hacer una acción; si algo sale mal, el <code>catch</code> atrapa el error y muestra un mensaje limpio en vez de que la pantalla se ponga blanca.",
+        example: "try { ... } catch (\\Exception $e) { ... }"
+      },
+      {
+        sym: "DB::transaction()",
+        name: "Transacción Atómica de Base de Datos",
+        desc: "Garantiza que un grupo de operaciones se cumpla al 100% o no se guarde nada. Si tienes que guardar a una persona, su usuario y su auditoría, y la auditoría falla, la transacción borra a la persona y al usuario automáticamente (Rollback).",
+        example: "DB::transaction(function() { ... });"
+      },
+      {
+        sym: "firstOrCreate()",
+        name: "Busca Primero o Crea Nuevo",
+        desc: "Comprueba si un registro ya existe en la base de datos. Si ya estaba registrado, lo carga en memoria; si no existía, lo crea en ese instante. Evita duplicados.",
+        example: "Persona::firstOrCreate(['dni' => '12345678']);"
+      },
+      {
+        sym: "lockForUpdate()",
+        name: "Bloqueo Pesimista de Concurrencia",
+        desc: "Le pone candado a una fila de la base de datos durante milisegundos para que dos personas usando el sistema al mismo tiempo no modifiquen o vendan el mismo cupo a la vez.",
+        example: "Salida::whereKey($id)->lockForUpdate()->first();"
+      },
+      {
+        sym: "with(['relacion'])",
+        name: "Eager Loading (Carga Anticipada)",
+        desc: "Optimización de consultas SQL. En vez de hacer 50 preguntas a la base de datos una por una (problema N+1), pide de una sola vez la tabla principal junto con sus tablas hijas.",
+        example: "Usuario::with(['persona', 'rol'])->first();"
+      }
     ];
 
     let currentRfKey = 'rf01';
@@ -387,26 +575,41 @@
       renderGlossary();
       loadRequirement(currentRfKey);
 
+      // Si la pantalla es pequeña (celular), inicia en Modo Celular directamente
+      if (window.innerWidth < 768) {
+        setAppMode('mobile');
+      }
+
       window.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowDown') { e.preventDefault(); selectNextLine(); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); selectPrevLine(); }
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          selectNextLine();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          selectPrevLine();
+        }
       });
     });
 
     function setAppMode(mode) {
+      document.getElementById('view-mobile').classList.toggle('hidden', mode !== 'mobile');
       document.getElementById('view-code').classList.toggle('hidden', mode !== 'code');
       document.getElementById('view-flashcards').classList.toggle('hidden', mode !== 'flashcards');
       document.getElementById('view-glossary').classList.toggle('hidden', mode !== 'glossary');
 
+      const btnMobile = document.getElementById('tab-app-mobile');
       const btnCode = document.getElementById('tab-app-code');
       const btnCards = document.getElementById('tab-app-flashcards');
       const btnGlossary = document.getElementById('tab-app-glossary');
 
+      btnMobile.className = mode === 'mobile' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
       btnCode.className = mode === 'code' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
       btnCards.className = mode === 'flashcards' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
       btnGlossary.className = mode === 'glossary' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
 
-      if (mode === 'flashcards') { renderFlashcards(); }
+      if (mode === 'flashcards') {
+        renderFlashcards();
+      }
     }
 
     function renderRfButtons() {
@@ -446,7 +649,9 @@
 
     function renderFileSubtabs() {
       const container = document.getElementById('file-subtabs-container');
+      const mobContainer = document.getElementById('mob-file-subtabs');
       container.innerHTML = '';
+      if (mobContainer) mobContainer.innerHTML = '';
       const rf = RF_DATA[currentRfKey];
 
       rf.files.forEach((file, index) => {
@@ -461,6 +666,12 @@
         btn.className = `px-3 py-1 rounded-lg text-xs font-mono font-bold transition ${isActive ? 'bg-teal-600 text-white shadow' : 'bg-slate-900 text-slate-400 hover:bg-slate-750'}`;
         btn.textContent = file.name;
         container.appendChild(btn);
+
+        if (mobContainer) {
+          const mobBtn = btn.cloneNode(true);
+          mobBtn.onclick = btn.onclick;
+          mobContainer.appendChild(mobBtn);
+        }
       });
 
       document.getElementById('current-file-badge').textContent = rf.files[currentFileIndex].path;
@@ -501,7 +712,9 @@
 
       file.lines.forEach((_, idx) => {
         const row = document.getElementById(`line-row-${idx}`);
-        if (row) { row.classList.toggle('active', idx === index); }
+        if (row) {
+          row.classList.toggle('active', idx === index);
+        }
       });
 
       document.getElementById('expl-line-num').textContent = `Línea ${line.num}`;
@@ -511,6 +724,18 @@
       document.getElementById('expl-rule-text').innerHTML = line.rule;
       document.getElementById('expl-jury-text').innerHTML = `"${line.jury}"`;
       document.getElementById('lines-counter-badge').textContent = `${index + 1} de ${file.lines.length} líneas analizadas`;
+
+      // Actualizar tarjeta para celular
+      if (document.getElementById('mob-line-badge')) {
+        document.getElementById('mob-line-badge').textContent = `Línea ${line.num} (${index + 1}/${file.lines.length})`;
+        document.getElementById('mob-file-name').textContent = file.name;
+        document.getElementById('mob-concept-tag').textContent = line.concept;
+        document.getElementById('mob-code-preview').textContent = line.code.trim();
+        document.getElementById('mob-plain-text').innerHTML = line.expl;
+        document.getElementById('mob-rule-text').innerHTML = line.rule;
+        document.getElementById('mob-jury-text').innerHTML = `"${line.jury}"`;
+        document.getElementById('mob-progress-bar').style.width = `${((index + 1) / file.lines.length) * 100}%`;
+      }
     }
 
     function selectNextLine() {
@@ -530,7 +755,9 @@
 
     function scrollLineIntoView(idx) {
       const row = document.getElementById(`line-row-${idx}`);
-      if (row) { row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+      if (row) {
+        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
     }
 
     function renderFlashcards() {
