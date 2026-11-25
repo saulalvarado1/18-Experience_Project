@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Estudio Interactivo - RF01 al RF05 | 18 Experience</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --primary-color: #0d9488;
+      --primary-dark: #0f766e;
+      --code-bg: #1e293b;
+      --line-active: #334155;
+    }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #0f172a;
+      color: #f1f5f9;
+    }
+    .code-container {
+      font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .line-row {
+      transition: background-color 0.15s ease;
+      cursor: pointer;
+    }
+    .line-row:hover {
+      background-color: rgba(51, 65, 85, 0.7);
+    }
+    .line-row.active {
+      background-color: rgba(13, 148, 136, 0.35) !important;
+      border-left: 4px solid #14b8a6;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 min-h-screen">
+
+  <!-- HEADER -->
+  <header class="max-w-7xl mx-auto mb-6 bg-slate-800/80 backdrop-blur border border-slate-700 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <span class="bg-teal-500/20 text-teal-300 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider border border-teal-500/30">18 Experience Web</span>
+        <span class="bg-amber-500/20 text-amber-300 font-semibold px-2.5 py-0.5 rounded-full text-xs">Modo Sustentación / Examen</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Simulador de Estudio Línea por Línea</h1>
+      <p class="text-slate-400 text-sm mt-0.5">Aprende qué significa cada línea de código de los requerimientos 1 al 5 y cómo explicárselo al jurado.</p>
+    </div>
+
+    <!-- Navegación entre Módulos de la Aplicación -->
+    <div class="flex flex-wrap gap-2">
+      <button onclick="setAppMode('code')" id="tab-app-code" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30">
+        💻 Explorador de Código
+      </button>
+      <button onclick="setAppMode('flashcards')" id="tab-app-flashcards" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600">
+        🎓 Preguntas de Jurado (Flashcards)
+      </button>
+      <button onclick="setAppMode('glossary')" id="tab-app-glossary" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600">
+        📖 Glosario para no programadores
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-7xl mx-auto">
+
+    <!-- SECCIÓN 1: SELECTOR DE REQUERIMIENTOS (RF01 - RF05) -->
+    <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-3 mb-5 flex flex-wrap gap-2 items-center justify-between">
+      <div class="flex flex-wrap gap-2" id="rf-buttons-container">
+        <!-- Generado dinámicamente -->
+      </div>
+      <div class="text-xs text-slate-400 px-2 py-1 bg-slate-900/80 rounded-lg border border-slate-700 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Haz click en cualquier línea de código para ver su explicación</span>
+      </div>
+    </div>
+
+    <!-- VISTA 1: EXPLORADOR DE CÓDIGO (SPLIT SCREEN: CÓDIGO A LA IZQUIERDA, EXPLICACIÓN A LA DERECHA) -->
+    <div id="view-code" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      
+      <!-- COLUMNA IZQUIERDA: VISOR DE CÓDIGO (7 cols) -->
+      <div class="lg:col-span-7 bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+        <!-- Sub-pestañas de archivo (si el RF tiene Controller y Service) -->
+        <div class="bg-slate-800/90 px-4 py-2.5 border-b border-slate-700 flex items-center justify-between gap-3 overflow-x-auto">
+          <div class="flex items-center gap-2" id="file-subtabs-container">
+            <!-- Botones de archivo dinámicos -->
+          </div>
+          <span id="current-file-badge" class="text-[11px] font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800 shrink-0">
+            Path del archivo
+          </span>
+        </div>
+
+        <!-- Líneas de código -->
+        <div class="overflow-y-auto max-h-[640px] code-container bg-[#0b1120] text-slate-200 select-none py-2" id="code-lines-container">
+          <!-- Líneas inyectadas por JS -->
+        </div>
+
+        <div class="bg-slate-800/60 px-4 py-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between items-center">
+          <span>💡 Tip: Usa las flechas ⬆️ / ⬇️ de tu teclado para moverte entre líneas</span>
+          <span id="lines-counter-badge">Línea seleccionada</span>
+        </div>
+      </div>
+
+      <!-- COLUMNA DERECHA: EXPLICADOR DETALLADO (5 cols) -->
+      <div class="lg:col-span-5 flex flex-col gap-4 sticky top-4">
+        
+        <!-- Tarjeta de Explicación de la Línea -->
+        <div class="bg-slate-850 bg-slate-800 border-2 border-teal-500/50 rounded-2xl p-5 shadow-2xl">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-700 mb-4">
+            <div class="flex items-center gap-2">
+              <span id="expl-line-num" class="bg-teal-500 text-slate-950 font-black text-sm px-2.5 py-0.5 rounded-lg">Línea --</span>
+              <span class="text-xs font-semibold text-slate-300">Desglose Técnico</span>
+            </div>
+            <span id="expl-concept-tag" class="text-[11px] bg-slate-700 text-teal-300 font-mono px-2 py-0.5 rounded border border-slate-600">Concepto</span>
+          </div>
+
+          <!-- Código resaltado actual -->
+          <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 font-mono text-xs text-amber-300 mb-4 overflow-x-auto" id="expl-code-preview">
+            Selecciona una línea de código a la izquierda...
+          </div>
+
+          <!-- Explicación en lenguaje sencillo -->
+          <div class="space-y-3.5">
+            <div>
+              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <span>📌</span> ¿Qué hace exactamente esta línea?
+              </h3>
+              <p id="expl-plain-text" class="text-sm text-slate-200 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-slate-700/60">
+                Haz click en cualquier línea de código para conocer en cristiano qué hace.
+              </p>
+            </div>
+
+            <!-- Por qué se hizo así / Regla de negocio -->
+            <div>
+              <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <span>⚖️</span> Regla de Negocio o Seguridad (Por qué existe)
+              </h3>
+              <p id="expl-rule-text" class="text-xs text-slate-300 leading-relaxed bg-amber-950/20 p-3 rounded-xl border border-amber-900/30">
+                --
+              </p>
+            </div>
+
+            <!-- Qué responder si el profesor te pregunta -->
+            <div>
+              <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <span>🎤</span> Cómo decirlo en tu sustentación frente al jurado
+              </h3>
+              <div id="expl-jury-text" class="text-xs text-emerald-200/90 leading-relaxed bg-emerald-950/30 p-3 rounded-xl border border-emerald-800/40 italic">
+                --
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini resumen del requerimiento completo -->
+        <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <span>📋</span> Resumen Ejecutivo del Requerimiento
+          </h4>
+          <p id="rf-summary-box" class="text-xs text-slate-300 leading-relaxed">
+            Cargando resumen...
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- VISTA 2: PREGUNTAS DE JURADO (FLASHCARDS INTERACTIVAS) -->
+    <div id="view-flashcards" class="hidden space-y-6">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <span>🎓</span> Banco de Preguntas Típicas de Examen y Sustentación
+          </h2>
+          <p class="text-slate-400 text-xs mt-1">Preguntas reales que un docente de ingeniería de software o base de datos te haría sobre este requerimiento.</p>
+        </div>
+        <div class="text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700">
+          Requerimiento actual: <span id="flashcard-rf-title" class="text-teal-400 font-bold">RF01</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="flashcards-grid">
+        <!-- Tarjetas inyectadas por JS -->
+      </div>
+    </div>
+
+    <!-- VISTA 3: GLOSARIO DE TÉRMINOS PARA NO PROGRAMADORES -->
+    <div id="view-glossary" class="hidden space-y-6">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span>📖</span> Diccionario de Símbolos y Palabras Raras de PHP
+        </h2>
+        <p class="text-slate-400 text-xs mt-1">¿Ves símbolos como <code>-></code>, <code>::</code> o <code>$</code> y no sabes qué son? Aquí están explicados en lenguaje de la vida real para que nunca te agarren desprevenido.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="glossary-grid">
+        <!-- Glosario inyectado por JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="max-w-7xl mx-auto mt-10 text-center text-xs text-slate-500 py-6 border-t border-slate-800">
+    18 Experience Web • Sistema de Preparación de Sustentación • Proyecto de Titulación / Prácticas
+  </footer>
+
+  <script>
+    // ==========================================
+    // BASE DE CONOCIMIENTO DE LOS REQUERIMIENTOS 1 AL 5
+    // ==========================================
+    const RF_DATA = {
+      rf01: {
+        id: "rf01",
+        code: "RF01",
+        title: "RF01: Control de Acceso y Autenticación",
+        badge: "Seguridad y Login",
+        summary: "Permite a los usuarios ingresar al sistema validando credenciales cifradas (Bcrypt), protegiendo contra bots mediante CAPTCHA, verificando que usuario, personal y rol estén activos, y renovando la sesión para evitar suplantaciones.",
+        files: [
+          {
+            name: "AuthController.php",
+            label: "Controlador (Petición Web)",
+            path: "app/Modules/Seguridad/Controllers/AuthController.php",
+            lines: [
+              { num: 37, code: "public function login(Request $request)", concept: "Controlador HTTP", expl: "Es la puerta de entrada cuando el usuario hace clic en el botón 'Iniciar Sesión'. El objeto $request contiene lo que el usuario escribió.", rule: "Recibe los datos del formulario web.", jury: "Aquí inicia el flujo del CU01; el controlador recibe la petición y delega la validación." },
+              { num: 39, code: "    $request->validate([", concept: "Validación de Formulario", expl: "Verifica que ningún campo obligatorio venga vacío antes de hacer consultas a la base de datos.", rule: "RN: Campos obligatorios usuario, contraseña y captcha.", jury: "Previene enviar datos vacíos o tipos de datos maliciosos al servidor." },
+              { num: 40, code: "        'usuario' => 'required|string',", concept: "Regla obligatoria", expl: "Exige que el usuario haya escrito texto en el campo de usuario.", rule: "Obligatorio y formato texto.", jury: "Valida la integridad inicial de la entrada." },
+              { num: 41, code: "        'password' => 'required|string',", concept: "Regla obligatoria", expl: "Exige que se envíe una contraseña.", rule: "Obligatorio y texto.", jury: "Garantiza que la petición incluya contraseña antes de verificar hash." },
+              { num: 42, code: "        'captcha' => 'required|string',", concept: "Anti-Bot (CAPTCHA)", expl: "Obliga a ingresar el texto de la imagen de seguridad CAPTCHA.", rule: "CU01: Protección obligatoria contra robots de fuerza bruta.", jury: "Evita ataques automatizados de diccionarios o bots contra el inicio de sesión." },
+              { num: 50, code: "    if (!$this->authService->validateCaptcha($request->input('captcha'))) {", concept: "Validación Lógica", expl: "Comprueba si las letras escritas por el usuario coinciden con las letras guardadas en la sesión. El signo '!' significa 'si NO coincide'.", rule: "CU01 Flujo alternativo: CAPTCHA incorrecto.", jury: "Si el captcha falla, se detiene la ejecución inmediatamente sin tocar la base de datos." },
+              { num: 51, code: "        return back()", concept: "Redirección Segura", expl: "Devuelve al usuario a la misma pantalla del login.", rule: "UX/Seguridad: No avanzar al panel.", jury: "Regresa la vista manteniendo la seguridad del formulario." },
+              { num: 52, code: "            ->withInput($request->only('usuario'))", concept: "Persistencia de Formulario", expl: "Mantiene escrito el usuario para que no tenga que escribirlo de nuevo, pero OJO: ¡nunca devuelve la contraseña por seguridad!", rule: "Seguridad OWASP: Jamás repoblar contraseñas.", jury: "Por seguridad jamás se devuelve el campo password al navegador." },
+              { num: 53, code: "            ->withErrors(['captcha' => 'El código CAPTCHA es incorrecto.']);", concept: "Mensaje de Error", expl: "Muestra en color rojo debajo del campo CAPTCHA el mensaje de error.", rule: "Feedback amigable y claro al usuario.", jury: "Comunica el fallo exacto ocurrido." },
+              { num: 57, code: "    try {", concept: "Manejo de Excepciones", expl: "Inicia un bloque de prueba. Si el servicio detecta un error (usuario inactivo, clave mala), el sistema no explota, sino que lo atrapa elegantemente.", rule: "Robustez y tolerancia a fallos.", jury: "Evita pantallas de error técnico o exposición de trazas del sistema." },
+              { num: 58, code: "        $this->authService->authenticate(", concept: "Capa de Servicio", expl: "Llama a la clase especializada de negocio que consulta PostgreSQL y valida la contraseña.", rule: "Arquitectura Monolito Modular: Lógica en Service, no en Controller.", jury: "Separamos responsabilidades: el controlador solo gestiona la web, el servicio ejecuta las reglas de negocio." },
+              { num: 63, code: "        $request->session()->regenerate();", concept: "Seguridad de Sesión", expl: "Cambia el código único de la cookie de sesión del navegador por uno completamente nuevo.", rule: "Prevención de Session Fixation (Fijación de Sesión).", jury: "Medida obligatoria contra ataques donde un tercero roba una cookie previa." },
+              { num: 65, code: "        return redirect()->intended(route('dashboard'));", concept: "Redirección Inteligente", expl: "Envía al usuario a la pantalla del Dashboard, o a la página que intentó abrir antes de loguearse.", rule: "Navegación fluida del sistema.", jury: "Lleva al usuario autenticado a su panel principal de trabajo." },
+              { num: 66, code: "    } catch (\\Exception $e) {", concept: "Captura de Errores", expl: "Si la contraseña fue incorrecta o el usuario está inactivo, aquí se atrapa el mensaje.", rule: "Manejo seguro de errores.", jury: "Captura las excepciones de negocio lanzadas por AuthService." },
+              { num: 69, code: "            ->withErrors(['usuario' => $e->getMessage()]);", concept: "Feedback de Seguridad", expl: "Muestra en la pantalla el mensaje de error ('Usuario o contraseña incorrectos').", rule: "Informar al usuario sin revelar datos sensibles.", jury: "Muestra la razón del rechazo al usuario." }
+            ]
+          },
+          {
+            name: "AuthService.php",
+            label: "Servicio de Negocio (Lógica y BD)",
+            path: "app/Modules/Seguridad/Services/AuthService.php",
+            lines: [
+              { num: 56, code: "public function authenticate(string $username, string $password): Usuario", concept: "Método de Dominio", expl: "Recibe el usuario y password, y promete devolver el modelo Usuario autenticado.", rule: "Regla de negocio central del CU01.", jury: "Concentra todas las validaciones de acceso al sistema." },
+              { num: 58, code: "    $usuario = Usuario::with(['persona', 'rol'])", concept: "Eager Loading (Optimización)", expl: "Busca en la tabla 'usuario' y al mismo tiempo trae en una sola consulta a la persona física y a su rol.", rule: "Rendimiento: Evita el problema de consultas N+1.", jury: "Utilizamos Eager Loading para consultar en una sola ejecución las relaciones persona y rol." },
+              { num: 59, code: "        ->where('nombre_usuario', trim($username))", concept: "Filtro SQL", expl: "Busca exactamente el nombre de usuario eliminando espacios accidentales al inicio o final (trim).", rule: "Coincidencia exacta de login.", jury: "Genera la cláusula WHERE nombre_usuario = ? en PostgreSQL." },
+              { num: 60, code: "        ->first();", concept: "Resultado Único", expl: "Obtiene el primer registro coincidente o null si no existe.", rule: "Nombre de usuario es único.", jury: "Obtiene la entidad Usuario de la base de datos." },
+              { num: 62, code: "    if (!$usuario) {", concept: "Validación de Existencia", expl: "Si la consulta no devolvió ningún usuario con ese nombre.", rule: "Seguridad: Error genérico para no dar pistas a atacantes.", jury: "Si no existe, se rechaza de inmediato." },
+              { num: 63, code: "        throw new \\Exception('Usuario o contraseña incorrectos.');", concept: "Excepción de Seguridad", expl: "Lanza el mensaje de rechazo.", rule: "OWASP: Mismo mensaje para usuario falso o contraseña falsa.", jury: "No revelamos si el usuario existe o no para evitar enumeración de usuarios." },
+              { num: 66, code: "    if (!$usuario->activo) {", concept: "Estado del Usuario", expl: "Comprueba si la cuenta del usuario fue dada de baja (activo = false).", rule: "RN: Usuarios inactivos no pueden ingresar.", jury: "Control de acceso por estado de la cuenta." },
+              { num: 70, code: "    if (!$usuario->persona || !$usuario->persona->activo) {", concept: "Estado del Trabajador", expl: "Verifica que el personal asociado a esta cuenta no esté desactivado o cesado en la empresa.", rule: "RN: Si el trabajador fue cesado, no puede usar su cuenta.", jury: "Validación de integridad humana: cuenta activa pero persona dada de baja se bloquea." },
+              { num: 74, code: "    if (!$usuario->rol || !$usuario->rol->activo) {", concept: "Estado del Rol", expl: "Verifica que el rol asignado (Gerente, Counter, etc.) siga habilitado en el sistema.", rule: "RN: Roles deshabilitados no pueden operar.", jury: "Protección RBAC: valida que el rol exista y esté vigente." },
+              { num: 78, code: "    if (!$this->passwordService->verify($password, $usuario->password_hash)) {", concept: "Verificación Bcrypt", expl: "Compara matemáticamente la contraseña escrita contra el hash criptográfico guardado en la BD.", rule: "Seguridad: Comparación segura contra algoritmo Bcrypt unidireccional.", jury: "Nunca desencriptamos; verificamos la clave con hash Bcrypt salado." },
+              { num: 83, code: "    $usuario->ultimo_acceso = now();", concept: "Auditoría de Acceso", expl: "Guarda la fecha y hora exacta actual del inicio de sesión.", rule: "CU01: Registrar último acceso del usuario.", jury: "Trazabilidad operativa para saber cuándo entró el usuario." },
+              { num: 84, code: "    $usuario->save();", concept: "Persistencia SQL", expl: "Ejecuta un UPDATE en la tabla usuario en PostgreSQL para guardar la fecha.", rule: "Persistir cambio de estado.", jury: "Actualiza la columna ultimo_acceso en la base de datos." },
+              { num: 86, code: "    Auth::login($usuario);", concept: "Inicio de Sesión", expl: "Le dice a Laravel que este usuario ya está legalmente conectado.", rule: "Establecer credenciales en la sesión.", jury: "Autentica formalmente al usuario en el framework." }
+            ]
+          }
+        ],
+        flashcards: [
+          { q: "¿Cómo se guardan las contraseñas en la base de datos?", a: "Se almacenan cifradas con el algoritmo Bcrypt mediante Hash::make(). Nunca en texto plano, garantizando que nadie pueda leerlas ni siquiera los administradores de la base de datos." },
+          { q: "¿Por qué se regenera la sesión después de iniciar sesión con $request->session()->regenerate()?", a: "Para prevenir ataques de 'Fijación de Sesión' (Session Fixation), asegurando que el identificador de sesión anterior quede invalidado y el usuario use una cookie fresca." },
+          { q: "¿Qué valida el sistema antes de permitir el ingreso además de la contraseña?", a: "Valida 3 estados: 1) Que el usuario esté activo ($usuario->activo), 2) Que la persona física trabajadora esté activa, y 3) Que el rol asignado esté habilitado." }
+        ]
+      },
+
+      rf02: {
+        id: "rf02",
+        code: "RF02",
+        title: "RF02: Gestión de Personal y Cuentas",
+        badge: "Usuarios y Roles",
+        summary: "Permite a Gerencia crear y administrar las cuentas del personal operativo (GERENTE, COUNTER, CONTABILIDAD). Aplica transacciones atómicas de base de datos para no dejar registros huérfanos entre persona y usuario, y registra auditoría RN16.",
+        files: [
+          {
+            name: "UsuarioController.php",
+            label: "Controlador (store)",
+            path: "app/Modules/Seguridad/Controllers/UsuarioController.php",
+            lines: [
+              { num: 70, code: "public function store(Request $request)", concept: "Controlador de Guardado", expl: "Recibe los datos del formulario de nuevo trabajador y cuenta de usuario.", rule: "CU04: Registrar nuevo usuario del personal.", jury: "Método para procesar la creación de cuentas de personal administrativo." },
+              { num: 72, code: "    $validated = $request->validate([", concept: "Validaciones Estrictas", expl: "Aplica reglas de negocio sobre los datos enviados antes de procesarlos.", rule: "Validación de entrada de datos.", jury: "Filtra que el documento, rol y contraseñas cumplan los estándares." },
+              { num: 79, code: "        'id_rol' => ['required', 'integer', Rule::exists('rol', 'id_rol')->whereIn('nombre', UsuarioService::ROLES_PERSONAL)],", concept: "Validación de Roles Permitidos", expl: "Obliga a que el rol exista en la BD y sea únicamente de personal: GERENTE, COUNTER o CONTABILIDAD (no permite crear un CLIENTE por esta vía).", rule: "RN: Solo roles operativos autorizados.", jury: "Evita asignación de roles inexistentes o no autorizados." },
+              { num: 80, code: "        'nombre_usuario' => 'required|string|max:50|unique:usuario,nombre_usuario',", concept: "Unicidad de Usuario", expl: "Comprueba en PostgreSQL que nadie más tenga ese mismo nombre de usuario.", rule: "RN01: Nombre de usuario único en el sistema.", jury: "Garantiza la clave única en la columna nombre_usuario." },
+              { num: 81, code: "        'password' => 'required|string|min:' . UsuarioService::MIN_PASSWORD,", concept: "Política de Contraseñas", expl: "Obliga a que la contraseña tenga como mínimo 8 caracteres.", rule: "RN: Longitud mínima de seguridad (8 caracteres).", jury: "Aplica la política de longitud mínima requerida por la empresa." },
+              { num: 85, code: "        DB::transaction(function () use ($validated) {", concept: "Transacción Atómica (ACID)", expl: "Abre una transacción SQL. Si cualquier paso falla, todo se revierte (Rollback) y no queda nada a medias.", rule: "Integridad de datos: Todo o Nada.", jury: "Garantiza atomicidad entre la tabla persona y usuario; si falla la auditoría, no se crea el usuario." },
+              { num: 87, code: "            $this->validadorPersona->validar([ ... ]);", concept: "Validador de Identidad", expl: "Comprueba que si es DNI tenga exactamente 8 números, o formato válido de pasaporte.", rule: "RN: Formato oficial de documentos de identidad.", jury: "Servicio de dominio reutilizable para validar documentos legales peruanos." },
+              { num: 96, code: "            $persona = Persona::firstOrCreate(", concept: "Reutilización o Creación", expl: "Busca si la persona ya existe en la BD por su DNI. Si ya existe la usa; si no, inserta una nueva fila.", rule: "Evitar duplicidad de personas en la base de datos.", jury: "Aplica el patrón firstOrCreate para reutilizar la entidad persona." },
+              { num: 111, code: "            $usuario = Usuario::create([", concept: "Creación de Cuenta", expl: "Inserta la fila en la tabla 'usuario' vinculándola al id_persona obtenido.", rule: "Vincular cuenta con persona física.", jury: "Crea el registro de credenciales asociado al trabajador." },
+              { num: 115, code: "                'password_hash' => Hash::make($validated['password']),", concept: "Cifrado Hash", expl: "Convierte la contraseña ingresada en una cadena cifrada e irreversible con Bcrypt.", rule: "Seguridad: Almacenamiento seguro de credenciales.", jury: "Genera el hash irreversible de la clave antes de insertarlo en PostgreSQL." },
+              { num: 120, code: "            Auditoria::registrar(", concept: "Trazabilidad RN16", expl: "Guarda en la tabla auditoría quién creó este usuario, cuándo y qué rol se le asignó.", rule: "RN16: Registro obligatorio de auditoría en cambios sensibles.", jury: "Cumple la regla de negocio RN16 de auditoría del sistema." }
+            ]
+          },
+          {
+            name: "UsuarioService.php",
+            label: "Servicio (Cambio de Clave)",
+            path: "app/Modules/Seguridad/Services/UsuarioService.php",
+            lines: [
+              { num: 122, code: "public function cambiarContrasena(int $idUsuario, string $nueva, string $confirmacion, int $idGerente): Usuario", concept: "Caso de Uso CU05", expl: "Función exclusiva para que Gerencia cambie la clave de un trabajador si este la olvidó.", rule: "CU05: Cambio de contraseña por Gerencia.", jury: "Solo usuarios con rol GERENTE pueden invocar esta función." },
+              { num: 127, code: "    if ($nueva !== $confirmacion) {", concept: "Validación de Coincidencia", expl: "Verifica que la nueva contraseña y su repetición sean exactamente idénticas.", rule: "Evitar errores tipográficos.", jury: "Valida la confirmación de la contraseña antes de cambiarla." },
+              { num: 132, code: "        $usuario = Usuario::whereKey($idUsuario)->lockForUpdate()->firstOrFail();", concept: "Bloqueo Pesimista (Concurrencia)", expl: "Bloquea la fila en PostgreSQL (SELECT FOR UPDATE) para que nadie más modifique a este usuario al mismo milisegundo.", rule: "Concurrencia segura.", jury: "Usa lockForUpdate para evitar colisiones o condiciones de carrera concurrentes." },
+              { num: 133, code: "        $usuario->password_hash = $this->passwordService->hash($nueva);", concept: "Actualización de Hash", expl: "Genera el nuevo hash criptográfico y reemplaza al anterior (la clave vieja queda inutilizable).", rule: "Inmediata revocación de la clave vieja.", jury: "Invalida la contraseña anterior al actualizar el hash." },
+              { num: 137, code: "        Auditoria::registrar($idGerente, 'CAMBIAR_CONTRASENA', ...);", concept: "Auditoría sin Contraseña", expl: "Registra que Gerencia cambió la clave, pero NUNCA guarda el texto de la contraseña en el log.", rule: "RN16: Jamás auditar contraseñas en texto claro.", jury: "La auditoría registra el hecho del cambio pero nunca el secreto por privacidad." }
+            ]
+          }
+        ],
+        flashcards: [
+          { q: "¿Por qué se utiliza DB::transaction() al registrar un usuario?", a: "Porque se guardan datos en 2 tablas (persona y usuario) más la tabla de auditoría. Si una falla, la transacción hace ROLLBACK completo, evitando que queden personas huérfanas sin usuario o usuarios sin auditoría." },
+          { q: "¿Qué hace Persona::firstOrCreate()?", a: "Busca si ya existe una persona con ese tipo y número de documento. Si ya existe la reutiliza, y si no existe la crea en ese instante, impidiendo que una persona física se duplique." },
+          { q: "¿Qué rol tiene permiso para cambiar la contraseña de otro usuario?", a: "Solo el rol GERENTE (CU05), y al hacerlo se registra en la auditoría del sistema quién hizo el cambio." }
+        ]
+      },
+
+      rf03: {
+        id: "rf03",
+        code: "RF03",
+        title: "RF03: Resumen Operativo (Dashboard)",
+        badge: "KPIs y Analítica",
+        summary: "Proporciona a Gerencia y Counter un panel de mando en tiempo real con los indicadores operativos del día: reservas activas, salidas programadas, pagos pendientes de validación, recaudación neta y próximas salidas usando una vista SQL optimizada.",
+        files: [
+          {
+            name: "DashboardController.php",
+            label: "Controlador del Dashboard",
+            path: "app/Modules/Seguridad/Controllers/DashboardController.php",
+            lines: [
+              { num: 10, code: "public function index()", concept: "Panel Principal", expl: "Punto de entrada al Dashboard cuando el personal inicia sesión.", rule: "CU02: Consultar resumen operativo del día.", jury: "Carga todos los indicadores clave de rendimiento (KPIs) del día." },
+              { num: 12, code: "    if (auth()->check() && auth()->user()->tieneRol('CLIENTE')) {", concept: "Control de Acceso por Rol", expl: "Verifica si el usuario conectado es un cliente común.", rule: "Separación de interfaces: El cliente no ve finanzas internas.", jury: "Si es cliente, lo redirige a su portal personal de pasajero." },
+              { num: 17, code: "    $hoy = now()->toDateString();", concept: "Fecha Actual", expl: "Obtiene la fecha del servidor en formato YYYY-MM-DD para filtrar los eventos de hoy.", rule: "Filtrar operaciones del día.", jury: "Define el punto temporal para las consultas de la jornada." },
+              { num: 19, code: "    $reservasHoy = DB::table('reserva')->whereDate('fecha_reserva', $hoy)->where('estado', '<>', 'CANCELADA')->count();", concept: "Contador de Reservas", expl: "Cuenta cuántas reservas válidas se registraron hoy excluyendo las canceladas.", rule: "KPI 1: Ventas/Reservas del día.", jury: "Consulta agregada count() excluyendo estados cancelados." },
+              { num: 24, code: "    $salidasHoy = DB::table('salida')->whereDate('fecha', $hoy)->where('estado', '<>', 'CANCELADA')->count();", concept: "Contador de Salidas", expl: "Cuenta cuántos tours salen hoy de la agencia hacia los destinos.", rule: "KPI 2: Operaciones logísticas del día.", jury: "Permite al Counter saber cuántos grupos parten en la jornada." },
+              { num: 29, code: "    $pagosPendientes = DB::table('pago')->where('estado', 'PENDIENTE_VALIDACION')->count();", concept: "Alerta Financiera", expl: "Cuenta los comprobantes de pago subidos por clientes que Contabilidad aún no ha revisado.", rule: "KPI 3: Tareas pendientes de contabilidad.", jury: "Sirve como semáforo operativo para el área contable." },
+              { num: 33, code: "    $totalRecaudado = (float) DB::table('pago')->where('estado', 'VALIDADO')->sum(DB::raw('monto_base - monto_base_devuelto'));", concept: "Cálculo Financiero Neto", expl: "Suma todo el dinero real cobrado, restando devoluciones si hubo cancelaciones.", rule: "KPI 4: Dinero real neto ingresado a caja.", jury: "Calcula el importe neto real restando devoluciones mediante sum(monto_base - monto_base_devuelto)." },
+              { num: 38, code: "    $proximasSalidas = DB::table('vw_disponibilidad_salida')", concept: "Vista SQL Especializada", expl: "Consulta la vista 'vw_disponibilidad_salida' creada en PostgreSQL.", rule: "Rendimiento y encapsulación SQL.", jury: "Usamos una vista SQL para traer cupos totales, ocupados y disponibles sin recalcular manualmente en PHP." },
+              { num: 39, code: "        ->whereDate('fecha', '>=', $hoy)", concept: "Filtro Cronológico", expl: "Solo trae salidas desde hoy hacia el futuro.", rule: "Excluir salidas pasadas.", jury: "Filtra únicamente salidas vigentes." },
+              { num: 43, code: "        ->limit(5)->get();", concept: "Top 5 Próximas", expl: "Obtiene las 5 salidas más cercanas ordenadas por fecha y hora.", rule: "UX: Lista rápida para el counter.", jury: "Trae las 5 salidas inmediatas para agilizar la atención rápida." },
+              { num: 47, code: "    $ventasMes = DB::table('reserva')->selectRaw(\"TO_CHAR(fecha_reserva, 'YYYY-MM') as mes, SUM(total_contratado) as total\")...", concept: "Agrupación Analítica (RF14)", expl: "Agrupa las ventas por mes para alimentar el gráfico interactivo de barras de Chart.js.", rule: "RF14: Gráficos de tendencias de ventas.", jury: "Consulta analítica con group by mensual para alimentar la librería gráfica de la interfaz." }
+            ]
+          }
+        ],
+        flashcards: [
+          { q: "¿Por qué se utiliza la vista 'vw_disponibilidad_salida' en lugar de hacer consultas con joins directos en PHP?", a: "Porque la vista SQL ya tiene precalculada la disponibilidad de cupos (cupo_total, cupos_ocupados, cupos_disponibles) en el motor PostgreSQL, mejorando drásticamente el rendimiento y evitando código repetitivo." },
+          { q: "¿Qué hace la fórmula 'monto_base - monto_base_devuelto'?", a: "Calcula la recaudación neta real de la agencia: suma los pagos validados pero descuenta cualquier dinero reembolsado al cliente por cancelaciones." },
+          { q: "¿Qué sucede cuando un usuario con rol CLIENTE intenta ver el Dashboard?", a: "El sistema lo detecta en la línea 12 (auth()->user()->tieneRol('CLIENTE')) y lo redirige automáticamente a su portal personal (portal.dashboard), protegiendo la información financiera interna de la empresa." }
+        ]
+      },
+
+      rf04: {
+        id: "rf04",
+        code: "RF04",
+        title: "RF04: Gestión de Clientes",
+        badge: "Clientes y Regla RN02",
+        summary: "Administra el registro y ficha de clientes directos o corporativos. Valida documentos oficiales peruanos (DNI 8 dígitos, RUC 11 dígitos), evita que una persona física se duplique como cliente (Regla RN02) y permite consultar su historial integral.",
+        files: [
+          {
+            name: "ClienteService.php",
+            label: "Servicio de Clientes (registrar)",
+            path: "app/Modules/Clientes/Services/ClienteService.php",
+            lines: [
+              { num: 99, code: "public function registrar(array $datosPersona, string $tipoCliente, int $idUsuario): Cliente", concept: "Método de Registro", expl: "Recibe los datos personales del cliente, el tipo ('DIRECTO' o 'CORPORATIVO') y quién lo atiende.", rule: "CU08: Registrar nuevo cliente.", jury: "Método del servicio para dar de alta a un cliente en el sistema." },
+              { num: 102, code: "    $this->validador->validar($datosPersona);", concept: "Validador de Formatos", expl: "Comprueba que los nombres no tengan símbolos raros y que el DNI tenga 8 números exactos.", rule: "RN: Formato y validez de identidad.", jury: "Aplica las reglas de validación documental." },
+              { num: 108, code: "    if (!in_array($tipoCliente, ['DIRECTO', 'CORPORATIVO'])) { $tipoCliente = 'DIRECTO'; }", concept: "Normalización de Dominio", expl: "Garantiza que el tipo de cliente solo sea uno de los dos valores autorizados; si no se especifica, asume DIRECTO.", rule: "Clasificación de clientes según SRS.", jury: "Normaliza la categoría de cliente." },
+              { num: 112, code: "    return DB::transaction(function () use (...) {", concept: "Transacción ACID", expl: "Inicia la transacción para garantizar integridad entre persona, cliente y auditoría.", rule: "Integridad transaccional.", jury: "Asegura la creación consistente de las entidades." },
+              { num: 114, code: "        $personaExistente = $this->buscarPersonaPorDocumento($tipoDoc, $numDoc);", concept: "Búsqueda Previa", expl: "Busca en PostgreSQL si ya existe alguien con ese mismo DNI o Pasaporte.", rule: "Identificación de persona física.", jury: "Verifica si la persona ya está en el sistema." },
+              { num: 115, code: "        if ($personaExistente && Cliente::where('id_persona', $personaExistente->id_persona)->exists()) {", concept: "Control de Duplicados (RN02)", expl: "Si la persona ya existe Y ADEMÁS ya tiene un registro en la tabla cliente, se rechaza la operación.", rule: "Regla RN02: Una persona solo puede ser registrada una vez como cliente.", jury: "Implementa directamente la regla de negocio RN02 del SRS." },
+              { num: 116, code: "            throw new \\InvalidArgumentException('La persona ya está registrada como cliente.');", concept: "Excepción de Negocio", expl: "Lanza el mensaje de advertencia impidiendo la duplicación.", rule: "Alerta de duplicado.", jury: "Notifica al usuario que el cliente ya existe." },
+              { num: 119, code: "        $persona = $this->obtenerOCrearPersona($datosPersona);", concept: "Reutilización Inteligente", expl: "Si la persona ya existía (ej. fue registrada antes como acompañante de un viaje), la reutiliza sin duplicar; si no, la crea.", rule: "Normalización de base de datos.", jury: "Reutiliza la entidad persona si ya figuraba como pasajero en otra reserva." },
+              { num: 122, code: "        $cliente = Cliente::create([", concept: "Alta de Cliente", expl: "Inserta la fila en la tabla 'cliente' asociando el id_persona obtenido.", rule: "Generar registro de cliente.", jury: "Crea la entidad Cliente con fecha actual y estado activo." },
+              { num: 130, code: "        Auditoria::registrar($idUsuario, 'CREAR_CLIENTE', 'cliente', $cliente->id_cliente, ...);", concept: "Auditoría RN16", expl: "Registra qué trabajador de la agencia registró a este cliente.", rule: "RN16: Trazabilidad de creación de clientes.", jury: "Registra en la bitácora la creación del cliente." }
+            ]
+          },
+          {
+            name: "ClienteController.php",
+            label: "Controlador (store y vista)",
+            path: "app/Modules/Clientes/Controllers/ClienteController.php",
+            lines: [
+              { num: 29, code: "public function store(Request $request)", concept: "Receptor HTTP", expl: "Recibe los datos enviados desde la ventana modal o formulario de clientes.", rule: "Flujo web de clientes.", jury: "Controlador que orquesta la solicitud HTTP de alta de clientes." },
+              { num: 46, code: "    $this->clienteService->registrar($datosPersona, $tipoCliente, Auth::id());", concept: "Invocación de Servicio", expl: "Pasa los datos al servicio y le envía el ID del usuario actualmente conectado (Auth::id()).", rule: "Delegación a capa de servicio.", jury: "Mantiene el controlador ligero delegando toda la lógica al servicio." },
+              { num: 48, code: "    return redirect()->route('clientes.index')->with('success', 'Cliente registrado correctamente.');", concept: "Respuesta Exitosa", expl: "Redirige a la tabla de clientes con un aviso de confirmación verde.", rule: "Feedback de éxito al usuario.", jury: "Redirección con mensaje flash de éxito." },
+              { num: 49, code: "} catch (\\InvalidArgumentException $e) {", concept: "Captura de Regla de Negocio", expl: "Atrapa específicamente si violó una regla de negocio (ej. DNI repetido o inválido).", rule: "Manejo fino de excepciones.", jury: "Diferencia errores de validación de negocio de errores técnicos imprevistos." },
+              { num: 50, code: "    return back()->withInput()->with('error', $e->getMessage());", concept: "Retorno con Alerta", expl: "Regresa al formulario manteniendo lo escrito para que el usuario pueda corregir.", rule: "Preservación de formulario.", jury: "Retorna con los datos ingresados para evitar que el usuario deba reescribirlos." }
+            ]
+          }
+        ],
+        flashcards: [
+          { q: "¿Qué exige la Regla de Negocio RN02 sobre los clientes?", a: "Establece que una persona física no puede ser registrada más de una vez como cliente. Si el DNI ya existe vinculado a un cliente, el sistema rechaza el intento con una excepción clara." },
+          { q: "¿Qué pasa si una persona ya fue pasajera acompañante en un tour y ahora quiere registrarse como cliente?", a: "La función obtenerOCrearPersona() detecta que su registro de 'persona' ya existe y lo reutiliza, creándole únicamente su nuevo rol en la tabla 'cliente' sin duplicar su identidad." },
+          { q: "¿Qué tipos de clientes maneja el sistema?", a: "Maneja 2 tipos según el SRS: DIRECTO (persona natural que viaja) y CORPORATIVO (empresas o instituciones que contratan paquetes turísticos)." }
+        ]
+      },
+
+      rf05: {
+        id: "rf05",
+        code: "RF05",
+        title: "RF05: Catálogo de Destinos Turísticos",
+        badge: "Catálogo y Soft-State",
+        summary: "Permite gestionar los destinos turísticos ofrecidos en Tacna y el sur del Perú (Miculla, Calientes, Tarata, etc.). Valida la no duplicidad de nombres y aplica borrado lógico (Soft-State / activo = false) para no romper reservas históricas.",
+        files: [
+          {
+            name: "CatalogoService.php",
+            label: "Servicio de Catálogo (crear y toggle)",
+            path: "app/Modules/Catalogo/Services/CatalogoService.php",
+            lines: [
+              { num: 37, code: "public function crearDestino(array $datos, int $idUsuario): Destino", concept: "Creación de Destino", expl: "Método que procesa la creación de un nuevo lugar turístico para la agencia.", rule: "CU10: Registrar destino turístico.", jury: "Servicio encargado de la lógica de catálogo para destinos." },
+              { num: 39, code: "    $nombre = trim($datos['nombre'] ?? '');", concept: "Sanitización", expl: "Limpia espacios en blanco accidentales del nombre del destino.", rule: "Evitar nombres vacíos o con espacios falsos.", jury: "Sanitiza la entrada del nombre." },
+              { num: 44, code: "    if (Destino::where('nombre', $nombre)->exists()) {", concept: "Control de Nombres Duplicados", expl: "Consulta en la base de datos si ya existe un destino con ese mismo nombre.", rule: "RN: Nombre de destino único.", jury: "Evita que se creen dos destinos llamados igual (ej. dos 'Miculla')." },
+              { num: 45, code: "        throw new \\InvalidArgumentException('Ya existe un destino registrado con ese nombre.');", concept: "Bloqueo de Duplicado", expl: "Arroja error si el nombre ya está ocupado.", rule: "Unicidad de catálogo.", jury: "Lanza excepción de validación de negocio." },
+              { num: 49, code: "        $destino = Destino::create([", concept: "Inserción en BD", expl: "Inserta la fila en la tabla 'destino' con su altitud (msnm), recomendaciones y cómo llegar.", rule: "Guardar ficha técnica del destino.", jury: "Persiste los datos técnicos y turísticos del destino en PostgreSQL." },
+              { num: 57, code: "            'activo' => true,", concept: "Estado Inicial Activo", expl: "Todo nuevo destino nace listo para ser usado en tours y paquetes.", rule: "Destinos nuevos nacen habilitados.", jury: "Inicializa el flag lógico activo en true." },
+              { num: 60, code: "        Auditoria::registrar($idUsuario, 'CREAR_DESTINO', 'destino', $destino->id_destino, ...);", concept: "Auditoría de Catálogo", expl: "Registra en bitácora qué usuario creó el destino.", rule: "RN16: Auditoría de cambios en catálogo.", jury: "Garantiza trazabilidad en el catálogo turístico." },
+              { num: 96, code: "public function cambiarEstadoDestino(int $id, bool $activo, int $idUsuario): Destino", concept: "Borrado Lógico (Soft State)", expl: "En lugar de eliminar con DELETE de SQL, solo cambia el campo 'activo' a false o true.", rule: "Regla crítica: Proteger historial de reservas pasadas.", jury: "Aplicamos Soft Delete / Borrado Lógico para no violar restricciones de clave foránea ni romper el historial contable." },
+              { num: 98, code: "    $destino = Destino::findOrFail($id);", concept: "Búsqueda Segura", expl: "Busca el destino por su ID; si no existe, lanza automáticamente error 404.", rule: "Garantizar existencia del recurso.", jury: "Obtiene el modelo o detiene con excepción Not Found." },
+              { num: 99, code: "    $destino->activo = $activo; $destino->save();", concept: "Persistencia del Estado", expl: "Actualiza el valor en PostgreSQL. Si pasa a inactivo, ya no sale para nuevas ventas, pero el pasado queda intacto.", rule: "Preservación histórica.", jury: "Modifica el estado de vigencia sin pérdida de datos." }
+            ]
+          },
+          {
+            name: "DestinoController.php",
+            label: "Controlador (toggleEstado)",
+            path: "app/Modules/Catalogo/Controllers/DestinoController.php",
+            lines: [
+              { num: 53, code: "public function toggleEstado(int $id)", concept: "Alternador de Estado", expl: "Función rápida para activar o desactivar un destino con un solo clic.", rule: "CU10: Habilitar/Deshabilitar destino.", jury: "Acción del controlador para alternar el estado del destino." },
+              { num: 56, code: "    $destino = Destino::findOrFail($id);", concept: "Lectura de Estado Actual", expl: "Obtiene el destino para saber si estaba prendido o apagado.", rule: "Consultar estado vigente.", jury: "Verifica el estado actual del registro." },
+              { num: 57, code: "    $nuevoEstado = !$destino->activo;", concept: "Inversión Booleana", expl: "Si estaba true pasa a false; si estaba false pasa a true.", rule: "Toggle bidireccional.", jury: "Invierte el valor booleano actual." },
+              { num: 59, code: "    $this->catalogoService->cambiarEstadoDestino($id, $nuevoEstado, Auth::id());", concept: "Delegación Segura", expl: "Envía el nuevo estado al servicio y el ID del usuario para auditoría.", rule: "Transaccionalidad en servicio.", jury: "Ejecuta la actualización en el servicio de catálogo." },
+              { num: 61, code: "    $msg = $nuevoEstado ? 'Destino activado correctamente.' : 'Destino desactivado correctamente.';", concept: "Mensaje Dinámico", expl: "Prepara el texto de confirmación adecuado según lo que se hizo.", rule: "Claridad en feedback.", jury: "Comunica el resultado exacto de la operación." }
+            ]
+          }
+        ],
+        flashcards: [
+          { q: "¿Por qué NO se utiliza una sentencia SQL DELETE para borrar destinos turísticos?", a: "Porque causaría un error de integridad referencial (Foreign Key) en PostgreSQL o dejaría huérfanos los tours, cotizaciones y reservas históricas que visitaron ese destino. En su lugar se utiliza 'Borrado Lógico' (activo = false)." },
+          { q: "¿Qué valida el sistema al crear un nuevo destino turístico?", a: "Valida que el nombre no esté vacío y que no exista otro destino con el mismo nombre en la base de datos." },
+          { q: "¿Qué datos técnicos complementarios se registran para un destino en Tacna?", a: "Se registra la altitud en metros sobre el nivel del mar (altitud_msnm), cómo llegar, temporada recomendada y recomendaciones especiales para los viajeros." }
+        ]
+      }
+    };
+
+    const GLOSSARY = [
+      {
+        sym: "$variable",
+        name: "Signo de Dólar ($)",
+        desc: "En PHP, TODA cajita que guarda un dato comienza con un signo de dólar. Por ejemplo: <code>$usuario</code> guarda la información del usuario, <code>$hoy</code> guarda la fecha.",
+        example: "$hoy = '2026-11-25';"
+      },
+      {
+        sym: "->",
+        name: "Flecha Simple (->)",
+        desc: "Significa 'acceder a una propiedad o pedirle una acción a un objeto'. Piensa en un carro: <code>$carro->frenar()</code> o <code>$usuario->nombre</code>.",
+        example: "$usuario->nombre_usuario"
+      },
+      {
+        sym: "::",
+        name: "Doble Dos Puntos (::)",
+        desc: "Llamada estática. Se usa cuando le pides ayuda directa a una clase sin necesidad de crear una copia antes. Ejemplo: <code>DB::transaction()</code> o <code>Hash::make()</code>.",
+        example: "Hash::make('secreto123')"
+      },
+      {
+        sym: "=>",
+        name: "Flecha Doble (=>)",
+        desc: "Se usa en los diccionarios o arreglos asociativos para decir 'esta etiqueta TIENE este valor'. Por ejemplo: <code>'nombre' => 'Miculla'</code>.",
+        example: "['nombre' => 'Saul', 'rol' => 'Gerente']"
+      },
+      {
+        sym: "try { } catch { }",
+        name: "Bloque Try - Catch (Trata y Atrapa)",
+        desc: "Es el cinturón de seguridad del sistema. En el <code>try</code> el sistema intenta hacer una acción; si algo sale mal, el <code>catch</code> atrapa el error y muestra un mensaje limpio en vez de que la pantalla se ponga blanca.",
+        example: "try { ... } catch (\\Exception $e) { ... }"
+      },
+      {
+        sym: "DB::transaction()",
+        name: "Transacción Atómica de Base de Datos",
+        desc: "Garantiza que un grupo de operaciones se cumpla al 100% o no se guarde nada. Si tienes que guardar a una persona, su usuario y su auditoría, y la auditoría falla, la transacción borra a la persona y al usuario automáticamente (Rollback).",
+        example: "DB::transaction(function() { ... });"
+      },
+      {
+        sym: "firstOrCreate()",
+        name: "Busca Primero o Crea Nuevo",
+        desc: "Comprueba si un registro ya existe en la base de datos. Si ya estaba registrado, lo carga en memoria; si no existía, lo crea en ese instante. Evita duplicados.",
+        example: "Persona::firstOrCreate(['dni' => '12345678']);"
+      },
+      {
+        sym: "lockForUpdate()",
+        name: "Bloqueo Pesimista de Concurrencia",
+        desc: "Le pone candado a una fila de la base de datos durante milisegundos para que dos personas usando el sistema al mismo tiempo no modifiquen o vendan el mismo cupo a la vez.",
+        example: "Salida::whereKey($id)->lockForUpdate()->first();"
+      },
+      {
+        sym: "with(['relacion'])",
+        name: "Eager Loading (Carga Anticipada)",
+        desc: "Optimización de consultas SQL. En vez de hacer 50 preguntas a la base de datos una por una (problema N+1), pide de una sola vez la tabla principal junto con sus tablas hijas.",
+        example: "Usuario::with(['persona', 'rol'])->first();"
+      }
+    ];
+
+    let currentRfKey = 'rf01';
+    let currentFileIndex = 0;
+    let selectedLineIndex = 0;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderRfButtons();
+      renderGlossary();
+      loadRequirement(currentRfKey);
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          selectNextLine();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          selectPrevLine();
+        }
+      });
+    });
+
+    function setAppMode(mode) {
+      document.getElementById('view-code').classList.toggle('hidden', mode !== 'code');
+      document.getElementById('view-flashcards').classList.toggle('hidden', mode !== 'flashcards');
+      document.getElementById('view-glossary').classList.toggle('hidden', mode !== 'glossary');
+
+      const btnCode = document.getElementById('tab-app-code');
+      const btnCards = document.getElementById('tab-app-flashcards');
+      const btnGlossary = document.getElementById('tab-app-glossary');
+
+      btnCode.className = mode === 'code' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
+      btnCards.className = mode === 'flashcards' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
+      btnGlossary.className = mode === 'glossary' ? 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-teal-600 text-white shadow-lg shadow-teal-900/30' : 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-700 text-slate-300 hover:bg-slate-600';
+
+      if (mode === 'flashcards') {
+        renderFlashcards();
+      }
+    }
+
+    function renderRfButtons() {
+      const container = document.getElementById('rf-buttons-container');
+      container.innerHTML = '';
+      Object.keys(RF_DATA).forEach(key => {
+        const rf = RF_DATA[key];
+        const btn = document.createElement('button');
+        btn.id = `btn-rf-${key}`;
+        btn.onclick = () => loadRequirement(key);
+        btn.className = `px-3.5 py-1.5 rounded-xl text-xs font-bold transition border ${key === currentRfKey ? 'bg-teal-500/20 text-teal-300 border-teal-500/50 shadow-md' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}`;
+        btn.innerHTML = `<span class="opacity-70">${rf.code}:</span> ${rf.badge}`;
+        container.appendChild(btn);
+      });
+    }
+
+    function loadRequirement(rfKey) {
+      currentRfKey = rfKey;
+      currentFileIndex = 0;
+      selectedLineIndex = 0;
+
+      Object.keys(RF_DATA).forEach(key => {
+        const btn = document.getElementById(`btn-rf-${key}`);
+        if (btn) {
+          btn.className = `px-3.5 py-1.5 rounded-xl text-xs font-bold transition border ${key === currentRfKey ? 'bg-teal-500/20 text-teal-300 border-teal-500/50 shadow-md' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}`;
+        }
+      });
+
+      const rf = RF_DATA[rfKey];
+      document.getElementById('rf-summary-box').textContent = rf.summary;
+      document.getElementById('flashcard-rf-title').textContent = `${rf.code} - ${rf.badge}`;
+
+      renderFileSubtabs();
+      renderCodeLines();
+      renderFlashcards();
+    }
+
+    function renderFileSubtabs() {
+      const container = document.getElementById('file-subtabs-container');
+      container.innerHTML = '';
+      const rf = RF_DATA[currentRfKey];
+
+      rf.files.forEach((file, index) => {
+        const btn = document.createElement('button');
+        btn.onclick = () => {
+          currentFileIndex = index;
+          selectedLineIndex = 0;
+          renderFileSubtabs();
+          renderCodeLines();
+        };
+        const isActive = index === currentFileIndex;
+        btn.className = `px-3 py-1 rounded-lg text-xs font-mono font-bold transition ${isActive ? 'bg-teal-600 text-white shadow' : 'bg-slate-900 text-slate-400 hover:bg-slate-750'}`;
+        btn.textContent = file.name;
+        container.appendChild(btn);
+      });
+
+      document.getElementById('current-file-badge').textContent = rf.files[currentFileIndex].path;
+    }
+
+    function renderCodeLines() {
+      const container = document.getElementById('code-lines-container');
+      container.innerHTML = '';
+      const file = RF_DATA[currentRfKey].files[currentFileIndex];
+
+      file.lines.forEach((line, index) => {
+        const row = document.createElement('div');
+        row.id = `line-row-${index}`;
+        row.className = `line-row flex items-center px-4 py-1 gap-3 ${index === selectedLineIndex ? 'active' : ''}`;
+        row.onclick = () => selectLine(index);
+
+        let highlightedCode = escapeHtml(line.code)
+          .replace(/(public function|function|return|if|try|catch|use|throw new|class)/g, '<span class="text-purple-400 font-bold">$1</span>')
+          .replace(/(\$[a-zA-Z0-9_]+)/g, '<span class="text-sky-300 font-semibold">$1</span>')
+          .replace(/('(?:[^']|\\')*')/g, '<span class="text-amber-300">$1</span>')
+          .replace(/([A-Z][a-zA-Z0-9_]+::)/g, '<span class="text-emerald-400 font-bold">$1</span>');
+
+        row.innerHTML = `
+          <span class="w-8 text-right text-slate-500 font-mono text-[11px] select-none shrink-0">${line.num}</span>
+          <span class="text-slate-600 select-none shrink-0">│</span>
+          <span class="font-mono text-xs whitespace-pre overflow-x-hidden">${highlightedCode}</span>
+        `;
+        container.appendChild(row);
+      });
+
+      selectLine(selectedLineIndex);
+    }
+
+    function selectLine(index) {
+      selectedLineIndex = index;
+      const file = RF_DATA[currentRfKey].files[currentFileIndex];
+      const line = file.lines[index];
+
+      file.lines.forEach((_, idx) => {
+        const row = document.getElementById(`line-row-${idx}`);
+        if (row) {
+          row.classList.toggle('active', idx === index);
+        }
+      });
+
+      document.getElementById('expl-line-num').textContent = `Línea ${line.num}`;
+      document.getElementById('expl-concept-tag').textContent = line.concept;
+      document.getElementById('expl-code-preview').textContent = line.code.trim();
+      document.getElementById('expl-plain-text').innerHTML = line.expl;
+      document.getElementById('expl-rule-text').innerHTML = line.rule;
+      document.getElementById('expl-jury-text').innerHTML = `"${line.jury}"`;
+      document.getElementById('lines-counter-badge').textContent = `${index + 1} de ${file.lines.length} líneas analizadas`;
+    }
+
+    function selectNextLine() {
+      const file = RF_DATA[currentRfKey].files[currentFileIndex];
+      if (selectedLineIndex < file.lines.length - 1) {
+        selectLine(selectedLineIndex + 1);
+        scrollLineIntoView(selectedLineIndex);
+      }
+    }
+
+    function selectPrevLine() {
+      if (selectedLineIndex > 0) {
+        selectLine(selectedLineIndex - 1);
+        scrollLineIntoView(selectedLineIndex);
+      }
+    }
+
+    function scrollLineIntoView(idx) {
+      const row = document.getElementById(`line-row-${idx}`);
+      if (row) {
+        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+
+    function renderFlashcards() {
+      const container = document.getElementById('flashcards-grid');
+      container.innerHTML = '';
+      const rf = RF_DATA[currentRfKey];
+
+      rf.flashcards.forEach((card, index) => {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'bg-slate-800/90 border border-slate-700 rounded-2xl p-5 shadow-lg flex flex-col justify-between';
+        cardDiv.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Pregunta de Examen #${index + 1}</span>
+              <span class="text-xs bg-slate-900 text-slate-400 px-2 py-0.5 rounded border border-slate-800">${rf.code}</span>
+            </div>
+            <h3 class="text-sm font-bold text-white mb-4 leading-snug">${card.q}</h3>
+            
+            <div id="flash-ans-${index}" class="hidden bg-emerald-950/40 border border-emerald-700/50 rounded-xl p-3.5 mb-4 text-xs text-emerald-200 leading-relaxed">
+              <div class="font-bold text-emerald-400 mb-1 text-[11px] uppercase tracking-wider">Respuesta para Sustentar:</div>
+              ${card.a}
+            </div>
+          </div>
+
+          <button onclick="toggleFlashcard(${index})" id="flash-btn-${index}" class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5">
+            <span>👁️</span> Mostrar Respuesta Sugerida
+          </button>
+        `;
+        container.appendChild(cardDiv);
+      });
+    }
+
+    function toggleFlashcard(index) {
+      const ansDiv = document.getElementById(`flash-ans-${index}`);
+      const btn = document.getElementById(`flash-btn-${index}`);
+      const isHidden = ansDiv.classList.contains('hidden');
+      ansDiv.classList.toggle('hidden', !isHidden);
+      btn.innerHTML = isHidden ? '<span>🙈</span> Ocultar Respuesta' : '<span>👁️</span> Mostrar Respuesta Sugerida';
+      btn.className = isHidden ? 'w-full py-2 bg-teal-600 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5' : 'w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5';
+    }
+
+    function renderGlossary() {
+      const container = document.getElementById('glossary-grid');
+      container.innerHTML = '';
+      GLOSSARY.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'bg-slate-800/80 border border-slate-700 rounded-2xl p-4 shadow-md flex flex-col justify-between';
+        div.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-mono font-black text-amber-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">${escapeHtml(item.sym)}</span>
+            </div>
+            <h4 class="text-sm font-bold text-white mb-2">${item.name}</h4>
+            <p class="text-xs text-slate-300 leading-relaxed mb-3">${item.desc}</p>
+          </div>
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800 font-mono text-[11px] text-teal-300 overflow-x-auto">
+            ${escapeHtml(item.example)}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
