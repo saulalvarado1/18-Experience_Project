@@ -71,8 +71,15 @@
                             <tr>
                                 <td class="ps-4 fw-bold text-primary">{{ $p->codigo }}</td>
                                 <td class="fw-semibold text-dark">
-                                    {{ $p->nombre }}
-                                    <div class="small text-muted">{{ Str::limit($p->descripcion, 60) }}</div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="{{ $p->imagen_url }}" alt="{{ $p->nombre }}" class="rounded-3 shadow-sm border" style="width: 52px; height: 42px; object-fit: cover;">
+                                        <div>
+                                            <div>{{ $p->nombre }}</div>
+                                            <div class="small text-muted text-truncate" style="max-width: 320px;" title="{{ $p->foto_descripcion }}">
+                                                <i class="bi bi-camera-fill me-1 text-primary"></i>{{ $p->foto_descripcion }}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
                                     <span class="badge {{ $p->tipo_producto === 'TOUR_LOCAL' ? 'bg-primary' : ($p->tipo_producto === 'PAQUETE_NACIONAL' ? 'bg-success' : 'bg-warning text-dark') }}">
