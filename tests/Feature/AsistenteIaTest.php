@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Modules\AsistenteIA\Models\AsistenteConsulta;
 use App\Modules\AsistenteIA\Services\RecomendadorIaService;
+use App\Modules\Catalogo\Models\ProductoTuristico;
 use App\Modules\Seguridad\Models\Persona;
 use App\Modules\Seguridad\Models\Rol;
 use App\Modules\Seguridad\Models\Usuario;
@@ -48,7 +50,7 @@ class AsistenteIaTest extends TestCase
         $response->assertSee('Inti');
         $response->assertSee('Asistente');
         $response->assertSee('Destinos Activos');
-        $response->assertSee('Preguntas Frecuentes');
+        $response->assertSee('Preguntas Más Frecuentes');
     }
 
     public function test_consulta_falla_si_el_mensaje_esta_vacio(): void
@@ -108,5 +110,46 @@ class AsistenteIaTest extends TestCase
         $this->assertArrayHasKey('tours', $contexto);
         $this->assertArrayHasKey('salidas', $contexto);
         $this->assertGreaterThan(0, count($contexto['destinos']));
+    }
+
+    public function test_consulta_se_registra_en_base_de_datos_para_metricas_bi(): void
+    {
+        $conteoInicial = AsistenteConsulta::count();
+
+        $response = $this->actingAs($this->usuario)->postJson('/asistente-ia/consultar', [
+            'mensaje' => 'Quiero hacer enoturismo y probar vinos y pisco en Pocollay',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertEquals($conteoInicial + 1, AsistenteConsulta::count());
+
+        $ultimo = AsistenteConsulta::latest('id_consulta')->first();
+        $this->assertEquals('GASTRONOMIA_PISCO', $ultimo->categoria_detectada);
+        $this->assertEquals($this->usuario->id_usuario, $ultimo->id_usuario);
+    }
+
+    public function test_servicio_calcula_ranking_frecuentes_y_metricas_demanda(): void
+    {
+        /** @var RecomendadorIaService $service */
+        $service = app(RecomendadorIaService::class);
+
+        $frecuentes = $service->obtenerPreguntasFrecuentes(5);
+        $this->assertIsArray($frecuentes);
+        $this->assertNotEmpty($frecuentes);
+
+        $metricas = $service->obtenerMetricasDemanda();
+        $this->assertArrayHasKey('total_consultas', $metricas);
+        $this->assertArrayHasKey('por_categoria', $metricas);
+        $this->assertArrayHasKey('ultimas', $metricas);
+    }
+
+    public function test_cotizacion_create_precarga_tour_sugerido_por_ia(): void
+    {
+        $tour = ProductoTuristico::where('activo', 1)->first();
+        if ($tour) {
+            $response = $this->actingAs($this->usuario)->get(route('cotizaciones.create', ['tour_id' => $tour->id_producto]));
+            $response->assertStatus(200);
+            $response->assertSee(strval($tour->id_producto));
+        }
     }
 }

@@ -18,31 +18,25 @@ class AsistenteIaController extends Controller
     }
 
     /**
-     * Muestra la interfaz gráfica del Asistente de IA (Chat y Recomendaciones).
+     * Muestra la interfaz gráfica del Asistente de IA (Chat, Sugerencias Dinámicas y Métricas BI).
      */
     public function index(): View
     {
         $contexto = $this->service->obtenerContextoTuristico();
-
-        // Preguntas frecuentes predefinidas para facilitar la interacción con 1 clic
-        $preguntasSugeridas = [
-            '¿Qué tour me recomiendas para hacer en familia con niños o abuelos?',
-            'Quiero visitar aguas termales y naturaleza en Tacna, ¿qué opción tienen?',
-            'Tengo solo medio día libre por la tarde, ¿qué circuito puedo realizar?',
-            'Me interesa conocer la gastronomía y hacer cata de piscos en bodegas.',
-            '¿Qué precauciones debo tomar para ir al Valle de los Géiseres por la altura?'
-        ];
+        $preguntasSugeridas = $this->service->obtenerPreguntasFrecuentes(5);
+        $metricas = $this->service->obtenerMetricasDemanda();
 
         return view('asistente.chat', [
             'destinos' => $contexto['destinos'],
             'tours' => $contexto['tours'],
             'salidas' => $contexto['salidas'],
             'preguntasSugeridas' => $preguntasSugeridas,
+            'metricas' => $metricas,
         ]);
     }
 
     /**
-     * Procesa la consulta vía AJAX / JSON y devuelve la recomendación generada.
+     * Procesa la consulta vía AJAX / JSON y registra la analítica en la base de datos.
      */
     public function consultar(Request $request): JsonResponse
     {
@@ -57,8 +51,9 @@ class AsistenteIaController extends Controller
 
         $mensaje = $request->input('mensaje');
         $historial = $request->input('historial', []);
+        $idUsuario = auth()->check() ? auth()->user()->id_usuario : null;
 
-        $resultado = $this->service->recomendar($mensaje, $historial);
+        $resultado = $this->service->recomendar($mensaje, $historial, $idUsuario);
 
         return response()->json($resultado);
     }

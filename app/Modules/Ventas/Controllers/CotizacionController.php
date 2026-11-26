@@ -32,14 +32,21 @@ class CotizacionController extends Controller
         return view('cotizaciones.index', compact('cotizaciones', 'filtros'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $clientes = Cliente::with('persona')->where('activo', 1)->get();
         $productos = ProductoTuristico::where('activo', 1)->with(['salidas' => function ($q) {
             $q->where('estado', 'PROGRAMADA')->where('fecha', '>=', now()->toDateString())->orderBy('fecha', 'asc');
         }])->get();
 
-        return view('cotizaciones.create', compact('clientes', 'productos'));
+        $itemsIniciales = old('items', []);
+        if (empty($itemsIniciales) && $request->filled('tour_id')) {
+            $itemsIniciales = [
+                ['id_producto' => (int) $request->input('tour_id'), 'cantidad_pasajeros' => 1]
+            ];
+        }
+
+        return view('cotizaciones.create', compact('clientes', 'productos', 'itemsIniciales'));
     }
 
     /**

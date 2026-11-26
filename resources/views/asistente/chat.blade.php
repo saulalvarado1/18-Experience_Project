@@ -6,7 +6,7 @@
 @section('content')
 <div class="container-fluid px-2 px-md-3 py-2">
     <div class="row g-3">
-        <!-- Panel Lateral: Destinos y Sugerencias Rápidas -->
+        <!-- Panel Lateral: Destinos, Sugerencias Rápidas y Métricas BI -->
         <div class="col-lg-4 col-xl-3">
             <!-- Tarjeta de bienvenida de Inti -->
             <div class="card border-0 shadow-sm rounded-4 mb-3" style="background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); color: white;">
@@ -28,11 +28,11 @@
                 </div>
             </div>
 
-            <!-- Preguntas Sugeridas (1 Clic) -->
+            <!-- Preguntas Sugeridas / Más Frecuentes (Dinámicas con BI) -->
             <div class="card border-0 shadow-sm rounded-4 mb-3">
-                <div class="card-header bg-white border-0 pt-3 pb-2 px-3 d-flex align-items-center gap-2">
-                    <i class="bi bi-lightning-charge-fill text-warning"></i>
-                    <h6 class="fw-bold mb-0 text-dark">Preguntas Frecuentes</h6>
+                <div class="card-header bg-white border-0 pt-3 pb-2 px-3 d-flex align-items-center justify-content-between">
+                    <span class="fw-bold text-dark small"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Preguntas Más Frecuentes</span>
+                    <span class="badge bg-light text-muted border" style="font-size: 0.65rem;">Top Consultas</span>
                 </div>
                 <div class="card-body p-2 p-md-3 pt-0">
                     <div class="d-flex flex-column gap-2" id="quick-questions">
@@ -47,7 +47,7 @@
             </div>
 
             <!-- Destinos Registrados en Tacna -->
-            <div class="card border-0 shadow-sm rounded-4">
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
                 <div class="card-header bg-white border-0 pt-3 pb-2 px-3 d-flex align-items-center justify-content-between">
                     <span class="fw-bold text-dark small"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Destinos Activos ({{ count($destinos) }})</span>
                     <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size: 0.7rem;">PostgreSQL</span>
@@ -68,6 +68,13 @@
                     </div>
                 </div>
             </div>
+
+            @if(auth()->check() && auth()->user()->tieneRol('GERENTE', 'COUNTER'))
+                <!-- Botón de Analítica de Demanda BI para Personal -->
+                <button type="button" class="btn btn-outline-teal w-100 rounded-4 py-2.5 shadow-sm fw-bold d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#modalMetricasIa" style="color: #0f766e; border-color: #0f766e;">
+                    <i class="bi bi-bar-chart-fill"></i> Analítica de Demanda IA (BI)
+                </button>
+            @endif
         </div>
 
         <!-- Panel Central: Chat de Conversación -->
@@ -130,6 +137,108 @@
     </div>
 </div>
 
+<!-- Modal de Analítica de Demanda Turística (BI) -->
+@if(auth()->check() && auth()->user()->tieneRol('GERENTE', 'COUNTER'))
+<div class="modal fade" id="modalMetricasIa" tabindex="-1" aria-labelledby="modalMetricasIaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom px-4 py-3 bg-light rounded-top-4">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-graph-up-arrow fs-4 text-teal" style="color: #0f766e;"></i>
+                    <h5 class="modal-title fw-bold text-dark" id="modalMetricasIaLabel">Analítica de Consultas IA (Business Intelligence)</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Tarjetas KPI -->
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="text-muted small fw-semibold">TOTAL CONSULTAS</span>
+                            <h3 class="fw-bold text-teal mb-0" style="color: #0f766e;">{{ $metricas['total_consultas'] }}</h3>
+                            <small class="text-muted">Preguntas registradas</small>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="text-muted small fw-semibold">TOP CATEGORÍA</span>
+                            <h5 class="fw-bold text-dark mb-0 mt-1">
+                                {{ $metricas['por_categoria']->first()?->categoria_detectada ?? 'N/A' }}
+                            </h5>
+                            <small class="text-muted">{{ $metricas['por_categoria']->first()?->total ?? 0 }} consultas</small>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-4">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="text-muted small fw-semibold">ESTADO DEL MOTOR</span>
+                            <h6 class="fw-bold text-success mb-0 mt-1">
+                                <i class="bi bi-shield-check"></i> Activo y Resiliente
+                            </h6>
+                            <small class="text-muted">Gemini RAG + Heurístico</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desglose por Categoría de Interés -->
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-pie-chart-fill text-teal me-1" style="color: #0f766e;"></i> Demanda de Viajeros por Tipo de Experiencia:</h6>
+                <div class="mb-4">
+                    @forelse($metricas['por_categoria'] as $cat)
+                        @php
+                            $pct = $metricas['total_consultas'] > 0 ? round(($cat->total / $metricas['total_consultas']) * 100) : 0;
+                        @endphp
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between small fw-semibold mb-1">
+                                <span>{{ str_replace('_', ' ', $cat->categoria_detectada) }}</span>
+                                <span class="text-muted">{{ $cat->total }} consultas ({{ $pct }}%)</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" style="width: {{ $pct }}%; background-color: #0d9488;"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-muted small">No hay suficientes datos registrados aún.</p>
+                    @endforelse
+                </div>
+
+                <!-- Últimas consultas realizadas -->
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history text-teal me-1" style="color: #0f766e;"></i> Historial Reciente de Consultas:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle" style="font-size: 0.8rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Pregunta</th>
+                                <th>Categoría</th>
+                                <th>Motor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($metricas['ultimas'] as $u)
+                                <tr>
+                                    <td class="text-muted">{{ $u->creado_en ? $u->creado_en->format('d/m H:i') : '-' }}</td>
+                                    <td>{{ $u->usuario?->nombre_usuario ?? 'Visitante' }}</td>
+                                    <td class="text-truncate" style="max-width: 200px;">{{ $u->pregunta }}</td>
+                                    <td><span class="badge bg-secondary bg-opacity-10 text-secondary">{{ $u->categoria_detectada }}</span></td>
+                                    <td><span class="badge bg-info bg-opacity-10 text-info">{{ $u->motor_usado }}</span></td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-2">Sin consultas recientes.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-top px-4 py-2 bg-light rounded-bottom-4">
+                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
     const chatContainer = document.getElementById('chat-messages-container');
@@ -166,7 +275,6 @@
         const texto = inputMensaje.value.trim();
         if (!texto) return;
 
-        // 1. Mostrar mensaje del usuario
         agregarBurbujaUsuario(texto);
         inputMensaje.value = '';
         inputMensaje.disabled = true;
@@ -174,7 +282,6 @@
         btnIcon.classList.add('d-none');
         btnSpinner.classList.remove('d-none');
 
-        // 2. Mostrar indicador de "escribiendo..."
         const indicadorId = agregarIndicadorEscribiendo();
         scrollAlFondo();
 

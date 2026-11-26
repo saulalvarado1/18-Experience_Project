@@ -2,6 +2,7 @@
 
 namespace App\Modules\AsistenteIA\Services;
 
+use App\Modules\AsistenteIA\Models\AsistenteConsulta;
 use App\Modules\Catalogo\Models\Destino;
 use App\Modules\Catalogo\Models\ProductoTuristico;
 use Illuminate\Support\Facades\DB;
@@ -46,9 +47,9 @@ class RecomendadorIaService
     }
 
     /**
-     * Procesa la consulta del usuario y devuelve una recomendación personalizada.
+     * Procesa la consulta del usuario, devuelve la recomendación y registra la métrica.
      */
-    public function recomendar(string $mensaje, array $historial = []): array
+    public function recomendar(string $mensaje, array $historial = [], ?int $idUsuario = null): array
     {
         $mensajeLimpio = trim($mensaje);
         if ($mensajeLimpio === '') {
@@ -63,12 +64,14 @@ class RecomendadorIaService
 
         $contexto = $this->obtenerContextoTuristico();
         $apiKey = env('GEMINI_API_KEY') ?: config('services.gemini.key');
+        $categoria = $this->clasificarCategoria($mensajeLimpio);
 
-        // Si hay API key de Gemini configurada, intentamos consultar el LLM
+        // 1. Si hay API key de Gemini configurada, intentamos consultar el LLM
         if (!empty($apiKey)) {
             try {
                 $resultadoGemini = $this->consultarGemini($mensajeLimpio, $contexto, $historial, $apiKey);
                 if ($resultadoGemini !== null) {
+                    $this->registrarConsulta($mensajeLimpio, $categoria, 'GEMINI_ONLINE', $idUsuario);
                     return $resultadoGemini;
                 }
             } catch (\Throwable $e) {
@@ -76,8 +79,119 @@ class RecomendadorIaService
             }
         }
 
-        // Motor heurístico de respaldo (100% offline, confiable para sustentación)
-        return $this->generarRespuestaHeuristica($mensajeLimpio, $contexto);
+        // 2. Motor heurístico de respaldo (100% offline, confiable para sustentación)
+        $resultadoHeuristico = $this->generarRespuestaHeuristica($mensajeLimpio, $contexto);
+        $this->registrarConsulta($mensajeLimpio, $categoria, 'HEURISTICO_OFFLINE', $idUsuario);
+
+        return $resultadoHeuristico;
+    }
+
+    /**
+     * Registra la consulta para auditoría y métricas de analítica de demanda (BI).
+     */
+    public function registrarConsulta(string $pregunta, string $categoria, string $motor, ?int $idUsuario = null): void
+    {
+        try {
+            AsistenteConsulta::create([
+                'id_usuario' => $idUsuario,
+                'pregunta' => mb_substr($pregunta, 0, 500, 'UTF-8'),
+                'categoria_detectada' => $categoria,
+                'motor_usado' => $motor,
+                'creado_en' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo registrar asistente_consulta: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Clasifica semánticamente la intención para métricas de demanda turística.
+     */
+    public function clasificarCategoria(string $mensaje): string
+    {
+        $q = mb_strtolower($mensaje, 'UTF-8');
+        if (str_contains($q, 'geiser') || str_contains($q, 'géiser') || str_contains($q, 'terma') || str_contains($q, 'candarave') || str_contains($q, 'altura') || str_contains($q, 'frio')) {
+            return 'ALTURA_TERMAS';
+        }
+        if (str_contains($q, 'familia') || str_contains($q, 'niño') || str_contains($q, 'abuelo') || str_contains($q, 'tranquilo') || str_contains($q, 'miculla') || str_contains($q, 'pachia')) {
+            return 'FAMILIA_MICULLA';
+        }
+        if (str_contains($q, 'pisco') || str_contains($q, 'vino') || str_contains($q, 'comida') || str_contains($q, 'pocollay') || str_contains($q, 'bodega')) {
+            return 'GASTRONOMIA_PISCO';
+        }
+        if (str_contains($q, 'medio dia') || str_contains($q, 'medio día') || str_contains($q, 'corto') || str_contains($q, 'alianza') || str_contains($q, 'historia')) {
+            return 'HISTORIA_CORTO';
+        }
+        if (str_contains($q, 'tarata') || str_contains($q, 'anden') || str_contains($q, 'paisaje') || str_contains($q, 'trekking')) {
+            return 'NATURALEZA_TARATA';
+        }
+        return 'CONSULTA_GENERAL';
+    }
+
+    /**
+     * Obtiene las preguntas más frecuentes almacenadas o valores predeterminados.
+     */
+    public function obtenerPreguntasFrecuentes(int $limite = 5): array
+    {
+        $frecuentes = [];
+        try {
+            $frecuentes = AsistenteConsulta::select('pregunta', DB::raw('count(*) as total'))
+                ->groupBy('pregunta')
+                ->orderByDesc('total')
+                ->limit($limite)
+                ->pluck('pregunta')
+                ->all();
+        } catch (\Throwable $e) {
+            Log::warning('Error consultando preguntas frecuentes: ' . $e->getMessage());
+        }
+
+        // Sugerencias por defecto si aún no hay suficiente historial
+        $predeterminadas = [
+            '¿Qué tour me recomiendas para hacer en familia con niños o abuelos?',
+            'Quiero visitar aguas termales y naturaleza en Tacna, ¿qué opción tienen?',
+            'Tengo solo medio día libre por la tarde, ¿qué circuito puedo realizar?',
+            'Me interesa conocer la gastronomía y hacer cata de piscos en bodegas.',
+            '¿Qué precauciones debo tomar para ir al Valle de los Géiseres por la altura?'
+        ];
+
+        return array_values(array_unique(array_merge($frecuentes, $predeterminadas)));
+    }
+
+    /**
+     * Métricas de analítica de demanda turística para el panel del Gerente.
+     */
+    public function obtenerMetricasDemanda(): array
+    {
+        try {
+            $total = AsistenteConsulta::count();
+            $porCategoria = AsistenteConsulta::select('categoria_detectada', DB::raw('count(*) as total'))
+                ->groupBy('categoria_detectada')
+                ->orderByDesc('total')
+                ->get();
+
+            $porMotor = AsistenteConsulta::select('motor_usado', DB::raw('count(*) as total'))
+                ->groupBy('motor_usado')
+                ->get();
+
+            $ultimas = AsistenteConsulta::with('usuario')
+                ->orderByDesc('creado_en')
+                ->limit(10)
+                ->get();
+
+            return [
+                'total_consultas' => $total,
+                'por_categoria' => $porCategoria,
+                'por_motor' => $porMotor,
+                'ultimas' => $ultimas,
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'total_consultas' => 0,
+                'por_categoria' => collect(),
+                'por_motor' => collect(),
+                'ultimas' => collect(),
+            ];
+        }
     }
 
     /**
@@ -85,7 +199,6 @@ class RecomendadorIaService
      */
     protected function consultarGemini(string $mensaje, array $contexto, array $historial, string $apiKey): ?array
     {
-        // Construimos el resumen de catálogo para el system prompt
         $destinosTexto = $contexto['destinos']->map(function ($d) {
             return "- {$d->nombre}: {$d->descripcion} (Altitud: {$d->altitud_msnm} msnm, Ubicación: {$d->ubicacion}, Tips: {$d->recomendaciones})";
         })->implode("\n");
@@ -117,8 +230,9 @@ REGLAS OBLIGATORIAS:
 2. Menciona precios exactos en Soles (PEN) según el catálogo.
 3. Si el destino supera los 3,500 msnm (como Géiseres de Candarave a 4,300 msnm), advierte sobre aclimatación, ropa abrigadora y precauciones de salud.
 4. Si viajan con niños o adultos mayores, sugiere tours de baja altitud y caminatas suaves (como Miculla o Ruta del Pisco).
-5. Finaliza invitando cordialmente a solicitar una cotización o registrar su reserva.
-6. Al final de tu respuesta, en una línea separada, incluye la etiqueta: [TOURS_SUGERIDOS: id1, id2] con los IDs numéricos de los tours recomendados.
+5. Si el usuario te hace preguntas ajenas al turismo, la agencia o los viajes en Tacna (como resolver ecuaciones, política, fútbol o tareas escolares), declina educadamente indicando que tu única función es asesorar sobre turismo y los paquetes de 18 Experience.
+6. Finaliza invitando cordialmente a solicitar una cotización o registrar su reserva.
+7. Al final de tu respuesta, en una línea separada, incluye la etiqueta: [TOURS_SUGERIDOS: id1, id2] con los IDs numéricos de los tours recomendados.
 PROMPT;
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
@@ -133,7 +247,7 @@ PROMPT;
                 ]
             ],
             'generationConfig' => [
-                'temperature' => 0.4,
+                'temperature' => 0.3,
                 'maxOutputTokens' => 700,
             ]
         ]);
@@ -143,7 +257,6 @@ PROMPT;
             $textoGenerado = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
             if ($textoGenerado) {
-                // Extraer IDs de tours recomendados si existen
                 $tourIds = [];
                 if (preg_match('/\[TOURS_SUGERIDOS:\s*([0-9,\s]+)\]/i', $textoGenerado, $coincidencias)) {
                     $tourIds = array_map('intval', explode(',', $coincidencias[1]));
@@ -152,7 +265,6 @@ PROMPT;
 
                 $toursRecomendados = $contexto['tours']->whereIn('id_producto', $tourIds)->values()->all();
 
-                // Si no especificó IDs válidos, buscar por coincidencia de nombre
                 if (empty($toursRecomendados)) {
                     $toursRecomendados = $this->extraerToursPorNombre($textoGenerado, $contexto['tours']);
                 }
@@ -183,7 +295,7 @@ PROMPT;
         $destinosElegidos = collect();
         $parrafos = [];
 
-        // 1. Detección de intención: Altura, termas, géiseres, Candarave
+        // 1. Detección: Altura, termas, géiseres, Candarave
         if (str_contains($q, 'geiser') || str_contains($q, 'géiser') || str_contains($q, 'terma') || str_contains($q, 'candarave') || str_contains($q, 'altura') || str_contains($q, 'frio') || str_contains($q, 'montaña')) {
             $dest = $destinos->first(fn($d) => str_contains(mb_strtolower($d->nombre), 'geiser'));
             if ($dest) {
@@ -195,7 +307,7 @@ PROMPT;
             if ($tourMatch) $toursElegidos->push($tourMatch);
         }
 
-        // 2. Detección de intención: Familias, niños, adultos mayores, arqueología, clima cálido
+        // 2. Detección: Familias, niños, adultos mayores, arqueología
         if (str_contains($q, 'familia') || str_contains($q, 'niño') || str_contains($q, 'abuelo') || str_contains($q, 'anciano') || str_contains($q, 'tranquilo') || str_contains($q, 'miculla') || str_contains($q, 'pachia') || str_contains($q, 'arqueolog')) {
             $dest = $destinos->first(fn($d) => str_contains(mb_strtolower($d->nombre), 'miculla'));
             if ($dest) {
@@ -206,7 +318,7 @@ PROMPT;
             if ($tourMatch) $toursElegidos->push($tourMatch);
         }
 
-        // 3. Detección de intención: Gastronomía, vino, pisco, Pocollay
+        // 3. Detección: Gastronomía, vino, pisco, Pocollay
         if (str_contains($q, 'pisco') || str_contains($q, 'vino') || str_contains($q, 'comida') || str_contains($q, 'pocollay') || str_contains($q, 'bodega') || str_contains($q, 'almorzar') || str_contains($q, 'gastronom')) {
             $dest = $destinos->first(fn($d) => str_contains(mb_strtolower($d->nombre), 'pisco') || str_contains(mb_strtolower($d->nombre), 'pocollay'));
             if ($dest) {
@@ -217,7 +329,7 @@ PROMPT;
             if ($tourMatch) $toursElegidos->push($tourMatch);
         }
 
-        // 4. Detección de intención: Medio día, corto, rápido, historia
+        // 4. Detección: Medio día, corto, rápido, historia
         if (str_contains($q, 'medio dia') || str_contains($q, 'medio día') || str_contains($q, 'corto') || str_contains($q, 'rapido') || str_contains($q, 'rápido') || str_contains($q, 'alianza') || str_contains($q, 'historia') || str_contains($q, 'guerra')) {
             $dest = $destinos->first(fn($d) => str_contains(mb_strtolower($d->nombre), 'alianza'));
             if ($dest) {
@@ -228,7 +340,7 @@ PROMPT;
             if ($tourMatch) $toursElegidos->push($tourMatch);
         }
 
-        // 5. Detección de intención: Tarata, andenes, naturaleza, caminatas
+        // 5. Detección: Tarata, andenes, naturaleza, caminatas
         if (str_contains($q, 'tarata') || str_contains($q, 'anden') || str_contains($q, 'paisaje') || str_contains($q, 'trekking') || str_contains($q, 'caminar')) {
             $dest = $destinos->first(fn($d) => str_contains(mb_strtolower($d->nombre), 'tarata'));
             if ($dest) {
@@ -241,14 +353,12 @@ PROMPT;
 
         // 6. Si no hubo coincidencia específica, armar recomendación general personalizada
         if ($toursElegidos->isEmpty()) {
-            // Seleccionar los dos tours más populares
             $toursElegidos = $tours->take(2);
             $destinosElegidos = $destinos->take(2);
             $parrafos[] = "¡Hola! En **18 Experience** contamos con los mejores circuitos turísticos para descubrir la belleza y cultura de Tacna.";
             $parrafos[] = "Para una primera visita, te recomiendo especialmente combinar nuestra ruta arqueológica y familiar de **Miculla y Pachía** con el majestuoso circuito andino de los **Géiseres de Candarave**.";
         }
 
-        // Agregar detalle de precios y salidas disponibles
         $parrafos[] = "💡 **Detalles del servicio:** Todas nuestras salidas incluyen transporte turístico autorizado, guiado oficial y seguro para pasajeros.";
 
         if (!empty($contexto['salidas']) && count($contexto['salidas']) > 0) {
