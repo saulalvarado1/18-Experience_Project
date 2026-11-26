@@ -249,6 +249,11 @@
                             <i class="bi bi-compass"></i> Catálogo de tours
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('asistente-ia*') ? 'active' : '' }}" href="{{ route('asistente.index') }}">
+                            <i class="bi bi-robot"></i> Asistente IA
+                        </a>
+                    </li>
                 @else
                     <!-- Módulos Generales para Personal de la Agencia -->
                     <li class="nav-item mt-2">
@@ -259,6 +264,13 @@
 
                     <!-- Counter y Gerente -->
                     @if (auth()->user()->tieneRol('GERENTE', 'COUNTER'))
+                        <li class="sidebar-section">Inteligencia Artificial</li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('asistente-ia*') ? 'active' : '' }}" href="{{ route('asistente.index') }}">
+                                <i class="bi bi-robot"></i> Asistente de Rutas
+                            </a>
+                        </li>
+
                         <li class="sidebar-section">Catálogo</li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('clientes*') ? 'active' : '' }}" href="{{ url('/clientes') }}">

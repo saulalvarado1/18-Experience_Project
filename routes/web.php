@@ -15,6 +15,7 @@ use App\Modules\Finanzas\Controllers\WebhookPasarelaController;
 use App\Modules\Reportes\Controllers\ReporteController;
 use App\Modules\PortalCliente\Controllers\PortalClienteController;
 use App\Modules\PortalCliente\Controllers\RegistroClienteController;
+use App\Modules\AsistenteIA\Controllers\AsistenteIaController;
 
 // --- Rutas Públicas de Acceso (CU01 y Registro B2C) ---
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -34,6 +35,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Inicio / Dashboard (CU02) - Accesible para todos los roles autenticados
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Asistente Turístico con IA (Recomendaciones inteligentes de Tacna)
+    Route::get('/asistente-ia', [AsistenteIaController::class, 'index'])->name('asistente.index');
+    Route::post('/asistente-ia/consultar', [AsistenteIaController::class, 'consultar'])->name('asistente.consultar');
 
     // --- Sub-módulos para GERENTE y COUNTER ---
     Route::middleware(['rol:GERENTE,COUNTER'])->group(function () {
