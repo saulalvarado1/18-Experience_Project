@@ -235,9 +235,10 @@ REGLAS OBLIGATORIAS:
 7. Al final de tu respuesta, en una línea separada, incluye la etiqueta: [TOURS_SUGERIDOS: id1, id2] con los IDs numéricos de los tours recomendados.
 PROMPT;
 
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+        $modelo = env('GEMINI_MODEL') ?: config('services.gemini.model', 'gemini-3.1-flash-lite');
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}";
 
-        $response = Http::timeout(6)->post($url, [
+        $response = Http::timeout(10)->post($url, [
             'contents' => [
                 [
                     'role' => 'user',
